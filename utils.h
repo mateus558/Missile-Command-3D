@@ -2,13 +2,12 @@
 #define UTILS_H_INCLUDED
 
 #include <iostream>
-#include "GameObjects.h"
+#include <cmath>
+#include <cstring>
 
-namespace Collision {
-	bool SphereCollision(Sphere a, Sphere b);
-	bool SpherePlaneCollision(Sphere s, float a, float b, float c, float d);
-	bool PointLineCollision(float coordinates[2][2], float x, float y);
+namespace Drawing {
+	void drawText(int x, int y, float r, float g, float b, int font, const char *string);
+	void drawEllipse(int x, int y, int z, float r, float g, float b, int xradius, int yradius, int npartes);
 }
-
 
 #endif

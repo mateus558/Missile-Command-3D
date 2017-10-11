@@ -5,6 +5,7 @@
 #include "Random.h"
 
 #include <random>
+#include <vector>
 
 namespace Random {
     std::minstd_rand gen;
@@ -24,4 +25,22 @@ namespace Random {
 
         return dist(gen);
     }
+    
+	std::vector<int> randomArray(int n){
+		int i, j, temp;
+		std::vector<int> arr(n+1);
+		
+		for(i = 0; i <= n; i++){
+			arr[i] = i;
+		}
+		
+		for(i = 0; i <= n; i++){
+			j = intInRange(0, n);
+			temp = arr[j];
+			arr[j] = arr[i];
+			arr[i] = temp;
+		}	
+		
+		return arr;
+	}    
 }
