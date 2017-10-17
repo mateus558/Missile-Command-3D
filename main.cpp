@@ -16,6 +16,7 @@ int score = 0, score1 = 7500, citiesExplodedItr = 0, enemyExplodedItr = 0, enemy
 int menu = 0, citiesExplodedNum = 0;
 int nMissiles = 10;
 int distOrigem = 100;
+//Point minCoord, maxCoord;
 string playerName;
 Button startGame, scoreScreen, back;
 float Dt;
@@ -227,19 +228,20 @@ void init_scores(){
 void init(void)
 {	
 	glClearColor(0.0, 0.0, 0.0, 0.0);
-	glShadeModel(GL_FLAT);
+	glShadeModel(GL_SMOOTH);
 
 	glEnable(GL_DEPTH_TEST);               // Habilita Z-buffer
-	glEnable(GL_CULL_FACE); // Habilita Backface-Culling  
+	//glEnable(GL_CULL_FACE); // Habilita Backface-Culling  
 	glEnable(GL_LIGHTING);                 // Habilita luz
-	glEnable(GL_LIGHT0);                   // habilita luz 0
+	//glEnable(GL_LIGHT0);                   // habilita luz 0
 	glEnable(GL_NORMALIZE);
+	glEnable(GL_COLOR_MATERIAL);
 	// Posicao da fonte de luz. Ultimo parametro define se a luz sera direcional (0.0) ou tera uma posicional (1.0)
-	glLightfv(GL_LIGHT0, GL_POSITION, posicao_luz);
+	//glLightfv(GL_LIGHT0, GL_POSITION, posicao_luz);
 	
 	switch(menu){
 		case 0:
-			startGame.updatePosition(Point(50, 0, 0));
+			startGame.updatePosition(Point(width/2, height/2, 0));
 			startGame.setSize(100, 19);
 			startGame.setColor(0.0, 1.0, 0.0);
 			startGame.setText("Start Game");
@@ -498,12 +500,12 @@ void display(void)
 	int i, ncities = cities.size(), nbatteries = batteries.size(), nmissiles = firedMissiles.size();
 	int numEnemyMissiles = enemyMissiles.size(), n;
 
-	/*glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glMatrixMode (GL_PROJECTION);
 	glLoadIdentity ();
 	glOrtho(0.0, width, height, 0.0, -30, 30);
-	*/
-	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+	/*glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glMatrixMode (GL_PROJECTION);
 	glLoadIdentity ();
@@ -512,7 +514,7 @@ void display(void)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity ();
 	gluLookAt (0.0, 0.0, distOrigem, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-
+*/
 	drawSquade();
 	//glutSolidSphere(20, 20, 20);
 	switch(menu){
