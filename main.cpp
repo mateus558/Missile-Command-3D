@@ -25,7 +25,7 @@ bool endLevel, fullscreen = false, endGame = false, scoreSaved = false, paused =
 GLfloat cor_luz[]		= { 1.0f, 1.0f, 1.0f, 1.0};
 GLfloat cor_luz_spec[]	= { 1.0f, 1.0f, 1.0f, 1.0};
 GLfloat cor_luz_amb[]	= { 0.1, 0.1, 0.1, 1.0};
-GLfloat posicao_luz[]   = { 50.0, 50.0, 50.0, 1.0};
+GLfloat posicao_luz[]   = { 0.0, 0.0, -20.0, 1.0};
 
 vector<Battery> batteries(3);
 vector<City> cities(6);
@@ -231,13 +231,13 @@ void init(void)
 	glShadeModel(GL_SMOOTH);
 
 	glEnable(GL_DEPTH_TEST);               // Habilita Z-buffer
-	//glEnable(GL_CULL_FACE); // Habilita Backface-Culling  
+	glEnable(GL_CULL_FACE); // Habilita Backface-Culling  
 	glEnable(GL_LIGHTING);                 // Habilita luz
-	//glEnable(GL_LIGHT0);                   // habilita luz 0
-	glEnable(GL_NORMALIZE);
-	glEnable(GL_COLOR_MATERIAL);
+	glEnable(GL_LIGHT0);                   // habilita luz 0
+	//glEnable(GL_NORMALIZE);
+	//glEnable(GL_COLOR_MATERIAL);
 	// Posicao da fonte de luz. Ultimo parametro define se a luz sera direcional (0.0) ou tera uma posicional (1.0)
-	//glLightfv(GL_LIGHT0, GL_POSITION, posicao_luz);
+	glLightfv(GL_LIGHT0, GL_POSITION, posicao_luz);
 	
 	switch(menu){
 		case 0:
@@ -437,7 +437,8 @@ void idle()
 
 //desenha o cursor
 void drawSquade()
-{
+{	
+	glDisable(GL_LIGHTING);
     glColor3f(0.0, 0.0, 1.0);
     glBegin(GL_LINES);
     	glVertex3f(MOUSEx, (MOUSEy-SIDE), 0);
@@ -446,6 +447,7 @@ void drawSquade()
         glVertex3f((MOUSEx+SIDE), MOUSEy, 0);
     glEnd();
     glFlush();
+    glEnable(GL_LIGHTING);
 }
 
 //desenha o terreno
@@ -549,6 +551,7 @@ void display(void)
 			}
 
 			string levelTag = "Level " + to_string(level);
+			glDisable(GL_LIGHTING);
 			Drawing::drawText(width/3, 50, 1, 0, 0, 1, string(to_string(score)).c_str());
 			Drawing::drawText(2*width/3, 50, 1, 0, 0, 1, string(to_string(score1)).c_str());
 			Drawing::drawText(20, 50, 0, 1, 0, 1, levelTag.c_str());
@@ -559,9 +562,10 @@ void display(void)
 			}
 			break;
 			}
+			glEnable(GL_LIGHTING);
 		case 2:
 			n = (scores.size() > 10)?10:scores.size();
-
+			glDisable(GL_LIGHTING);
 			Drawing::drawText(width/2 -30, 100, 0, 1, 0, 1, "SCORES");
 
 			for(auto itr = scores.begin(); itr != (scores.begin()+10); itr++){
@@ -569,6 +573,7 @@ void display(void)
 			}
 
 			back.draw();
+			glEnable(GL_LIGHTING);
 			break;
 		default:
 			break;

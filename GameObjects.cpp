@@ -249,8 +249,11 @@ void City::update(float dt){
 }
 
 void City::draw(){
-	Drawing::drawEllipse(pos.x, pos.y, 0, 0.0, 0.5, 1.0, 30, 20, 8);
-	Drawing::drawEllipse(pos.x, pos.y, 1, 0, 0, 1, 18, 10, 8);
+	
+	glColor3f(0, 0, 1);
+	glutSolidSphere(20,20,20);
+	//Drawing::drawEllipse(pos.x, pos.y, 0, 0.0, 0.5, 1.0, 30, 20, 8);
+	//Drawing::drawEllipse(pos.x, pos.y, 1, 0, 0, 1, 18, 10, 8);
 }
 
 /***********************************************
@@ -318,16 +321,19 @@ void Button::update(float dt){
 }
 
 void Button::draw(){
+	glDisable(GL_LIGHTING);
 	glColor3f(color[0], color[1], color[2]);
 
-	glBegin(GL_POLYGON);
-		glVertex3f(pos.x- size.x, pos.y - size.y, 0);
-		glVertex3f(pos.x+ size.x, pos.y - size.y, 0);
-		glVertex3f(pos.x+ size.x, pos.y + size.y, 0);
-		glVertex3f(pos.x- size.x, pos.y + size.y, 0);
+	glBegin(GL_POLYGON);		
+		glVertex3f(pos.x + size.x, pos.y - size.y, 0);
+		glVertex3f(pos.x - size.x, pos.y - size.y, 0);
+		glVertex3f(pos.x - size.x, pos.y + size.y, 0);
+		glVertex3f(pos.x + size.x, pos.y + size.y, 0);
+	
 	glEnd();
 
    	Drawing::drawText(pos.x - size.x/2, pos.y + size.y/3, 0, 0, 0, 1, text.c_str());
+	glEnable(GL_LIGHTING);
 }
 
 /***********************************************
@@ -343,8 +349,10 @@ void Score::setScore(int score){
 }
 
 void Score::draw(){
+	glDisable(GL_LIGHTING);
 	Drawing::drawText(pos.x, pos.y, 1, 0, 0, 1, text.c_str());
 	Drawing::drawText(pos.x + 150, pos.y, 1, 0, 0, 1, to_string(score).c_str());
+	glEnable(GL_LIGHTING);
 }
 
 void Score::update(float dt){
