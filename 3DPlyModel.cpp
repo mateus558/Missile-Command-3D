@@ -159,28 +159,6 @@ void PlyModel::unitize(){
 	}	
 }
 
-void PlyModel::miniScale(){
-	int i, n = points.size();
-	float sum = 0;
-	
-	for(i = 0; i < n; i++){
-		sum += points[i].norm();
-	}
-	sum /= n;
-	
-	if(sum <= 2){
-		scale(600);
-	}else if(sum > 2 && sum <= 5){
-		scale(5);
-	}
-	
-	if(sum >= 5)
-		scale(2.5);
-	if(sum > 250){
-		scale(0.03);
-	}
-}
-
 void PlyModel::scale(float scaleFactor){
 	int i, j, n = points.size();
 	

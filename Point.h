@@ -28,6 +28,10 @@ struct Point{
 		return x * p.x + y * p.y + z * p.z; 
 	}
 	
+	float norm(){
+		return sqrt(x*x + y*y + z*z);
+	}	
+		
 	void normalize(){
 		float norm = sqrt(x*x + y*y + z*z);
 		

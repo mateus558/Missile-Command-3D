@@ -19,7 +19,6 @@ public:
 	void scale(float scaleFactor);
 	void draw(DrawMode t);
 	void unitize();
-	void miniScale();
 	int getTrianglesNumber();
 	
 private:
