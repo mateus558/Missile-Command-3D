@@ -25,7 +25,7 @@ bool endLevel, fullscreen = false, endGame = false, scoreSaved = false, paused =
 GLfloat cor_luz[]		= { 1.0f, 1.0f, 1.0f, 1.0};
 GLfloat cor_luz_spec[]	= { 1.0f, 1.0f, 1.0f, 1.0};
 GLfloat cor_luz_amb[]	= { 0.1, 0.1, 0.1, 1.0};
-GLfloat posicao_luz[]   = { 0.0, 0.0, -20.0, 1.0};
+GLfloat posicao_luz[]   = { width/2, height/2 + 300, -20.0, 1.0};
 
 vector<Battery> batteries(3);
 vector<City> cities(6);
@@ -138,6 +138,9 @@ void init_cities(){
 	for(i = n/2; i < n; i++){
 		cities[i].updatePosition(Point((i - n/2 + 1)*(width - 50 - width/2)/3 + width/2 - 90, height - 90, 0));
 	}
+	for(i = 0; i < n; i++){
+		cities[i].load3DModel("cube.ply");
+	}
 }
 
 //Inicializa todos mísseis inimigos da fase
@@ -234,8 +237,8 @@ void init(void)
 	glEnable(GL_CULL_FACE); // Habilita Backface-Culling  
 	glEnable(GL_LIGHTING);                 // Habilita luz
 	glEnable(GL_LIGHT0);                   // habilita luz 0
-	//glEnable(GL_NORMALIZE);
-	//glEnable(GL_COLOR_MATERIAL);
+	glEnable(GL_NORMALIZE);
+	glEnable(GL_COLOR_MATERIAL);
 	// Posicao da fonte de luz. Ultimo parametro define se a luz sera direcional (0.0) ou tera uma posicional (1.0)
 	glLightfv(GL_LIGHT0, GL_POSITION, posicao_luz);
 	
@@ -263,8 +266,6 @@ void init(void)
 
 			break;
 	}
-	glShadeModel (GL_SMOOTH);
-	glEnable(GL_DEPTH_TEST);               // Habilita Z-buffer
 }
 
 template <class T>
@@ -454,10 +455,10 @@ void drawSquade()
 void drawTerrain(){
 	glColor4f(1.0f, 1.0f, 0.0f, 0.0f);
 	glBegin(GL_POLYGON);
-		glVertex3f(0, height - height/6, -10);
 		glVertex3f(width, height - height/6, -10);
-		glVertex3f(width, height, -10);
+		glVertex3f(0, height - height/6, -10);
 		glVertex3f(0, height, -10);
+		glVertex3f(width, height, -10);
 	glEnd();
 
 }
@@ -525,7 +526,7 @@ void display(void)
 			scoreScreen.draw();
 			break;
 		case 1:{
-			drawTerrain();
+			//drawTerrain();
 
 			for(i = 0; i < nbatteries; i++){
 				batteries[i].draw();

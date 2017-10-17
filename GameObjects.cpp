@@ -16,6 +16,9 @@ Object::Object(){}
 
 void Object::load3DModel(const char* file){
 	model_3d.readFromFile(file);
+	model_3d.unitize();
+	model_3d.computeNormals();
+	model_3d.scale(20);
 }
 
 void Object::setMass(float mass){
@@ -249,9 +252,12 @@ void City::update(float dt){
 }
 
 void City::draw(){
-	
 	glColor3f(0, 0, 1);
-	glutSolidSphere(20,20,20);
+	
+	glTranslatef(pos.x, pos.y, pos.z);
+	model_3d.draw(FLAT_SURFACE);
+	
+	/*glutSolidSphere(20,20,20);*/
 	//Drawing::drawEllipse(pos.x, pos.y, 0, 0.0, 0.5, 1.0, 30, 20, 8);
 	//Drawing::drawEllipse(pos.x, pos.y, 1, 0, 0, 1, 18, 10, 8);
 }

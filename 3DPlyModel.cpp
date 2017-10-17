@@ -208,7 +208,7 @@ void PlyModel::draw(DrawMode t){
 			}
 			break;
 		case FLAT_SURFACE:
-			glColor3f(0,.3,0);
+			//glColor3f(0,.3,0);
 			for(i = 0; i < nf; i++){
 				if(!hasNormals && normalComputed){
 					glNormal3f(normals[i].x, normals[i].y, normals[i].z);
@@ -219,6 +219,7 @@ void PlyModel::draw(DrawMode t){
 							glNormal3f(normals[faces[i][j]].x, normals[faces[i][j]].y, normals[faces[i][j]].z);
 						}
 						glVertex3f(points[faces[i][j]].x, points[faces[i][j]].y, points[faces[i][j]].z);
+						
 					}
 				glEnd();
 			}
