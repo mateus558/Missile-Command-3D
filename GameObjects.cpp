@@ -7,27 +7,16 @@
 
 using namespace std;
 
-/***********************************************
- *            Point Member Functions           *
- ***********************************************/
-
-void Point::operator=(const Point& p){
-	x = p.x;
-	y = p.y;
-	z = p.z;
-}
-
-ostream &operator<<( ostream &output, const Point &point ){
-    output << "[" << point.x << ", " << point.y << ", " << point.z << "]";
-
-    return output;
-}
 
 /***********************************************
  *           Object Member Functions           *
  ***********************************************/
 
 Object::Object(){}
+
+void Object::load3DModel(const char* file){
+	model_3d.readFromFile(file);
+}
 
 void Object::setMass(float mass){
 	this->mass = mass;

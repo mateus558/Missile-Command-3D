@@ -18,16 +18,19 @@ public:
 	void normalize();
 	void scale(float scaleFactor);
 	void draw(DrawMode t);
-	void centralize();
+	void unitize();
+	void miniScale();
 	int getTrianglesNumber();
 	
 private:
-	bool hasNormals = false, normalComputed = false, normalized = false, centralized = false;
+	bool hasNormals = false, normalComputed = false, normalized = false, minMaxAxisComputed = false;
+	bool centralized = false;
 	int facePoints = 0;
 	Point min, max;
 
 	std::vector<Point> points;
 	std::vector<Point> normals;
+	std::vector<Point> colors;
 	std::vector<std::vector<int> > faces;
 };
 

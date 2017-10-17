@@ -15,10 +15,16 @@ int width = 1080, height = 720, level = 1, launchedEnemies = 0, nMissilesRain = 
 int score = 0, score1 = 7500, citiesExplodedItr = 0, enemyExplodedItr = 0, enemyExplodedNum = 0, batteriesExplodedItr = 0;
 int menu = 0, citiesExplodedNum = 0;
 int nMissiles = 10;
+int distOrigem = 100;
 string playerName;
 Button startGame, scoreScreen, back;
 float Dt;
 bool endLevel, fullscreen = false, endGame = false, scoreSaved = false, paused = false;
+
+GLfloat cor_luz[]		= { 1.0f, 1.0f, 1.0f, 1.0};
+GLfloat cor_luz_spec[]	= { 1.0f, 1.0f, 1.0f, 1.0};
+GLfloat cor_luz_amb[]	= { 0.1, 0.1, 0.1, 1.0};
+GLfloat posicao_luz[]   = { 50.0, 50.0, 50.0, 1.0};
 
 vector<Battery> batteries(3);
 vector<City> cities(6);
@@ -219,12 +225,21 @@ void init_scores(){
 }
 
 void init(void)
-{
-	glClearColor (0.0, 0.0, 0.0, 1.0);
+{	
+	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glShadeModel(GL_FLAT);
 
+	glEnable(GL_DEPTH_TEST);               // Habilita Z-buffer
+	glEnable(GL_CULL_FACE); // Habilita Backface-Culling  
+	glEnable(GL_LIGHTING);                 // Habilita luz
+	glEnable(GL_LIGHT0);                   // habilita luz 0
+	glEnable(GL_NORMALIZE);
+	// Posicao da fonte de luz. Ultimo parametro define se a luz sera direcional (0.0) ou tera uma posicional (1.0)
+	glLightfv(GL_LIGHT0, GL_POSITION, posicao_luz);
+	
 	switch(menu){
 		case 0:
-			startGame.updatePosition(Point(width/2, height/2, 0));
+			startGame.updatePosition(Point(50, 0, 0));
 			startGame.setSize(100, 19);
 			startGame.setColor(0.0, 1.0, 0.0);
 			startGame.setText("Start Game");
@@ -423,14 +438,12 @@ void drawSquade()
 {
     glColor3f(0.0, 0.0, 1.0);
     glBegin(GL_LINES);
-    	glVertex2f(MOUSEx, MOUSEy-SIDE);
-        glVertex2f(MOUSEx, MOUSEy+SIDE);
-        glVertex2f(MOUSEx-SIDE, MOUSEy);
-        glVertex2f(MOUSEx+SIDE, MOUSEy);
-
+    	glVertex3f(MOUSEx, (MOUSEy-SIDE), 0);
+        glVertex3f(MOUSEx, (MOUSEy+SIDE), 0);
+        glVertex3f((MOUSEx-SIDE), MOUSEy, 0);
+        glVertex3f((MOUSEx+SIDE), MOUSEy, 0);
     glEnd();
     glFlush();
-
 }
 
 //desenha o terreno
@@ -485,13 +498,23 @@ void display(void)
 	int i, ncities = cities.size(), nbatteries = batteries.size(), nmissiles = firedMissiles.size();
 	int numEnemyMissiles = enemyMissiles.size(), n;
 
-	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	/*glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glMatrixMode (GL_PROJECTION);
 	glLoadIdentity ();
 	glOrtho(0.0, width, height, 0.0, -30, 30);
+	*/
+	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glMatrixMode (GL_PROJECTION);
+	glLoadIdentity ();
+	gluPerspective(45.0, (GLfloat) width/(GLfloat) height, 1.0, 100.0);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity ();
+	gluLookAt (0.0, 0.0, distOrigem, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
 	drawSquade();
-
+	//glutSolidSphere(20, 20, 20);
 	switch(menu){
 		case 0:
 			startGame.draw();
@@ -659,6 +682,16 @@ void keyboard (unsigned char key, int x, int y)
 				paused = true;
 			}else paused = false;
 			break;
+		case '+' :
+			distOrigem--;
+			cout << distOrigem << endl;
+	    	// if(distOrigem<20) distOrigem=20;
+		break;
+		case '-' :
+			distOrigem++;
+			cout << distOrigem << endl;
+ 			//if(distOrigem>180) distOrigem=180;
+		break;
 		case 'r':
 			restart_game();
 			break;

@@ -5,29 +5,8 @@
 #include <cmath>
 #include <string>
 
-//Estrutura para usar um ponto
-struct Point{
-	float x, y, z;
-	
-	Point(){
-		x = 0.0;
-		y = 0.0;
-		z = 0.0;
-	}
-	
-	Point(float x, float y, float z){
-		this->x = x;
-		this->y = y;
-		this->z = z;
-	}
-	
-	float distance(Point p){
-		return sqrt(pow(p.x - x, 2) + pow(p.y - y, 2) + pow(p.z - z, 2));
-	}
-	
-	void operator=(const Point&);
-	friend std::ostream &operator<<( std::ostream &output, const Point &point );
-};
+#include "3DPlyModel.h"
+#include "Point.h"
 
 //Classe base para os objetos de jogo
 class Object{
@@ -39,10 +18,12 @@ protected:
 	bool exploded = false, done = false;
 	//Posição atual e anterior do objeto
 	Point pos, lastPos;
+	PlyModel model_3d;
 	
 public:
 	Object();
-
+	
+	void load3DModel(const char* file);
 	void invertVx();
 	//Atualiza a posição do objeto
 	void updatePosition(Point pos);
