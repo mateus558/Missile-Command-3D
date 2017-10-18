@@ -23,8 +23,6 @@ float Dt;
 bool endLevel, fullscreen = false, endGame = false, scoreSaved = false, paused = false;
 
 GLfloat cor_luz[]		= { 1.0f, 1.0f, 1.0f, 1.0};
-GLfloat cor_luz_spec[]	= { 1.0f, 1.0f, 1.0f, 1.0};
-GLfloat cor_luz_amb[]	= { 0.1, 0.1, 0.1, 1.0};
 GLfloat posicao_luz[]   = { width/2, height/2 + 300, -20.0, 1.0};
 
 vector<Battery> batteries(3);
@@ -239,7 +237,11 @@ void init(void)
 	glEnable(GL_LIGHT0);                   // habilita luz 0
 	glEnable(GL_NORMALIZE);
 	glEnable(GL_COLOR_MATERIAL);
+	
 	// Posicao da fonte de luz. Ultimo parametro define se a luz sera direcional (0.0) ou tera uma posicional (1.0)
+	glLightfv(GL_LIGHT0, GL_AMBIENT, cor_luz);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, cor_luz);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, cor_luz);
 	glLightfv(GL_LIGHT0, GL_POSITION, posicao_luz);
 	
 	switch(menu){
@@ -531,12 +533,13 @@ void display(void)
 			for(i = 0; i < nbatteries; i++){
 				batteries[i].draw();
 			}
-
-			for(i = 0; i < ncities; i++){
-				if(!cities[i].isDone())
-					cities[i].draw();
-			}
-
+			
+			
+				for(i = 0; i < ncities; i++){
+					if(!cities[i].isDone())
+						cities[i].draw();
+				}
+			
 			for(i = 0; i < nmissiles; i++){
 				firedMissiles[i].draw();
 				firedMissiles[i].drawTarget(SIDE);

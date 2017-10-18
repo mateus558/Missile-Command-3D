@@ -131,6 +131,8 @@ void Missile::drawTarget(int side){
 
 void Missile::draw(){
 	if(done || exploded) return;
+
+	glDisable(GL_LIGHTING);
 	glColor4f(color[0], color[1], color[2], 0.0);
 
 	if(fired){
@@ -155,6 +157,7 @@ void Missile::draw(){
 			glVertex3f(pos.x-4.0, pos.y-4.0, 0.0);
 		glEnd();
 	}
+	glEnable(GL_LIGHTING);
 }
 
 void Missile::operator=(const Missile& p){
@@ -252,11 +255,12 @@ void City::update(float dt){
 }
 
 void City::draw(){
-	glColor3f(0, 0, 1);
-	
-	glTranslatef(pos.x, pos.y, pos.z);
-	model_3d.draw(FLAT_SURFACE);
-	
+	glPushMatrix();
+		glColor3f(0, 0, 1);
+
+		glTranslatef(pos.x, pos.y, pos.z);
+		model_3d.draw(FLAT_SURFACE);
+	glPopMatrix();
 	/*glutSolidSphere(20,20,20);*/
 	//Drawing::drawEllipse(pos.x, pos.y, 0, 0.0, 0.5, 1.0, 30, 20, 8);
 	//Drawing::drawEllipse(pos.x, pos.y, 1, 0, 0, 1, 18, 10, 8);
@@ -268,7 +272,10 @@ void City::draw(){
 
 void Explosion::draw(){
 	Random::init();
+	//glutSolidSphere();
+	glDisable(GL_LIGHTING);
 	Drawing::drawEllipse(pos.x, pos.y, 6, Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0), initRadius, initRadius, Random::intInRange(5, 15));
+	glEnable(GL_LIGHTING);
 }
 
 bool Explosion::isColliding(Object obj){
