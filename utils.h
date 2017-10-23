@@ -6,8 +6,8 @@
 #include <cstring>
 
 namespace Drawing {
-	void drawText(int x, int y, float r, float g, float b, int font, const char *string);
-	void drawEllipse(int x, int y, int z, float r, float g, float b, int xradius, int yradius, int npartes);
+	void drawText(float x, float y, float r, float g, float b, int font, const char *string);
+	void drawEllipse(float x, float y, float z, float r, float g, float b, float xradius, float yradius, int npartes);
 }
 
 #endif

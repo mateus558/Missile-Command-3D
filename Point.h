@@ -20,7 +20,7 @@ struct Point{
 		this->z = z;
 	}
 	
-	float distance(Point p){
+	double distance(Point p){
 		return sqrt(pow(p.x - x, 2) + pow(p.y - y, 2) + pow(p.z - z, 2));
 	}
 	
@@ -44,7 +44,7 @@ struct Point{
 		z = p.z;
 	}
 	
-	void operator*=(int c){
+	void operator*=(float c){
 		x *= c;
 		y *= c;
 		z *= c;

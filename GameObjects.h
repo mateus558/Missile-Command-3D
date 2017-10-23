@@ -54,7 +54,7 @@ class Missile : public Object {
 		void fire();
 		void reset();
 		std::vector<Missile> divide(int level);
-		void drawTarget(int side);
+		void drawTarget(float sidex, float sidey);
 		void draw();
 		void update(float dt);
 		
@@ -96,14 +96,14 @@ class Explosion : public Object {
 	private:
 		bool finished = false;
 		int signal = 1; 
-		float finalRadius = 40, initRadius = 0.1;
+		float finalRadius = 0.05, initRadius = 0.01;
 };
 
 class Button : public Object {
 	public:
-		void setSize(int x, int y);
+		void setSize(float x, float y);
 		void setText(std::string text);
-		bool clicked(int x, int y);
+		bool clicked(float x, float y);
 		void draw();
 		void update(float dt);
 	private:

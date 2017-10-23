@@ -3,11 +3,12 @@
 #include <vector>
 #include <fstream>
 #include <GL/glut.h>
-
 #include <cstring>
+
 #include "GameObjects.h"
 #include "Random.h"
 #include "utils.h"
+#include "3DPlyModel.h"
 
 using namespace std;
 
@@ -16,15 +17,16 @@ int score = 0, score1 = 7500, citiesExplodedItr = 0, enemyExplodedItr = 0, enemy
 int menu = 0, citiesExplodedNum = 0;
 int nMissiles = 10;
 int distOrigem = 100;
-//Point minCoord, maxCoord;
 string playerName;
 Button startGame, scoreScreen, back;
 float Dt;
-bool endLevel, fullscreen = false, endGame = false, scoreSaved = false, paused = false;
+bool endLevel, fullscreen = false, endGame = false, scoreSaved = false, paused = false, isOrtho = true;
 
+Point minCoord(0.0f, 0.0f, -100.0f), maxCoord(1.0f, 1.0f, 100.0f);
 GLfloat cor_luz[]		= { 1.0f, 1.0f, 1.0f, 1.0};
-GLfloat posicao_luz[]   = { width/2, height/2 + 300, -20.0, 1.0};
+GLfloat posicao_luz[]   = { maxCoord.x/2, maxCoord.y/2 + 300, -20.0, 1.0};
 
+PlyModel terrain;
 vector<Battery> batteries(3);
 vector<City> cities(6);
 vector<Missile> firedMissiles;
@@ -33,13 +35,14 @@ vector<bool> enemyLaunched(enemyMissiles.size(), false);
 vector<Explosion> explosions;
 vector<Score> scores;
 
-GLsizei MOUSEx=width/2, MOUSEy=height/2;
-GLfloat SIDE=8; // Tamanho da mira
+GLfloat MOUSEx=maxCoord.x/2, MOUSEy=maxCoord.y/2;
+GLfloat SIDEX = 10, SIDEY = 10; // Tamanho da mira
 
 bool compare_score(Score a, Score b){
 	return a.score < b.score;
 }
 
+float convert_range(float amin, float amax, float bmin, float bmax, float input);
 void restart_game();
 void init_batteries();
 void init_cities();
@@ -58,7 +61,6 @@ void idle();
 void reshape (int w, int h);
 void keyboard (unsigned char key, int x, int y);
 void motion(int x, int y );
-int findNearestBattery(int x, int y);
 void mouse(int button, int state, int x, int y);
 void specialKey(int key, int x, int y);
 
@@ -82,6 +84,24 @@ int main(int argc, char** argv){
 
 
 	return 0;
+}
+
+void setMaterial(void)
+{
+	GLfloat objeto_ambient[]   = { 0.25, 0.7, 0.25, 1.0 };
+	GLfloat objeto_difusa[]    = { .2, 0.4, 0.2, 1.0 };
+	GLfloat objeto_especular[] = { 0.774597, 0.774597, 0.774597, 1.0 };
+	GLfloat objeto_brilho[]    = { 90.0 };
+	
+	// Define os parametros da superficie a ser iluminada
+	glMaterialfv(GL_FRONT, GL_AMBIENT, objeto_ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, objeto_difusa);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, objeto_especular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, objeto_brilho);
+}
+
+float convert_range(float amin, float amax, float bmin, float bmax, float input){
+	return bmin + ((bmax - bmin) / (amax - amin)) * (input - amin);
 }
 
 void restart_game(){
@@ -114,27 +134,40 @@ void restart_game(){
 
 //Inicializa baterias
 void init_batteries(){
-	int i = 0, n = batteries.size(), pos;
+	int i = 0, n = batteries.size();
+	float x, y, z, pos, v = 1;
 	float r = Random::floatInRange(0, 1), g = Random::floatInRange(0, 1), b = Random::floatInRange(0, 1);
-
+	
 	for(i = 0; i < n; i++){
-
-		if(i == 0) pos = 60; else if(i == 1) pos = -80; else pos = -240;
-    batteries[i].setColor(r,g,b);
-		batteries[i].updatePosition(Point(i*(width/2 + 80) + pos ,height - 100, 0));
+		x = y = 0;
+		
+		if(i == 0) pos = convert_range(0, width, minCoord.x, maxCoord.x, 60); else if(i == 1) pos = convert_range(0, width, minCoord.x, maxCoord.x, -80); else pos = convert_range(0, width, minCoord.x, maxCoord.x, -240);
+		if(i == 0) x += .02; else if(i == 1) x -= .05; else x -= .228;
+    	batteries[i].setColor(r,g,b);
+		x += convert_range(0, width, minCoord.x, maxCoord.x, i*(width/2 + 80) + pos);
+		y += convert_range(0, height, minCoord.y, maxCoord.y, height - 100);
+		
+		batteries[i].setVelocities(Point(v, v, 0));
+		batteries[i].updatePosition(Point(x, y, 0));
 		batteries[i].init();
+		batteries[i].load3DModel("cube.ply");
 	}
 }
 
 //Inicializa cidades
 void init_cities(){
 	int i, n = cities.size();
-
+	float x, y;
+	
 	for(i = 0; i < n/2; i++){
-		cities[i].updatePosition(Point((i+1)*(width/2-60)/3, height - 90, 0));
+		x = convert_range(0, width, minCoord.x, maxCoord.x, (i+1)*(width/2-60)/3) - .025;
+		y = convert_range(0, height, minCoord.y, maxCoord.y, height - 90);
+		cities[i].updatePosition(Point(x, y, 0));
 	}
 	for(i = n/2; i < n; i++){
-		cities[i].updatePosition(Point((i - n/2 + 1)*(width - 50 - width/2)/3 + width/2 - 90, height - 90, 0));
+		x = convert_range(0, width, minCoord.x, maxCoord.x, (i - n/2 + 1)*(width - 50 - width/2)/4 + width/2 - 90) + 0.08;
+		y = convert_range(0, height, minCoord.y, maxCoord.y, height - 90);
+		cities[i].updatePosition(Point(x, y, 0));
 	}
 	for(i = 0; i < n; i++){
 		cities[i].load3DModel("cube.ply");
@@ -145,14 +178,14 @@ void init_cities(){
 void init_enemies(){
 	int i, n = enemyMissiles.size();
 	float r = Random::floatInRange(0, 1), g = Random::floatInRange(0, 1), b = Random::floatInRange(0, 1);
-
+ 
 	for(i = 0; i < n; i++){
-		Point p = Point(Random::intInRange(0, width), -5, 0);
+		Point p = Point(Random::floatInRange(0, maxCoord.x), -.01, 0);
 
 		enemyMissiles[i].setColor(r, g, b);
 		enemyMissiles[i].updatePosition(p);
 		enemyMissiles[i].setFrom(p);
-		enemyMissiles[i].setVelocities(Point(0.05 + 0.02 * (level-1), 0.05 + 0.02 * (level-1), 0));
+		enemyMissiles[i].setVelocities(Point(0.03 + 0.02 * (level-1), 0.03 + 0.02 * (level-1), 0));
 	}
 
 	launchEnemyMissiles(4);
@@ -193,7 +226,7 @@ void launchEnemyMissiles(int n){
 			goal = (batOrCity)?notDoneCity[id]->getPosition():notDoneBat[id]->getPosition();
 
 			if(!batOrCity){
-				goal.y -= 15;
+				goal.y -= convert_range(0, height, minCoord.y, maxCoord.y, 15);
 			}
 
 			enemyMissiles[i].setGoal(goal);
@@ -222,7 +255,7 @@ void init_scores(){
 
 	//Seta posições dos scores
 	for(i = 0; i < scores.size(); i++){
-		scores[i].updatePosition(Point(width/2-50, 150 + 20*i, 0));
+		scores[i].updatePosition(Point(maxCoord.x/2-.1, 0.3 + 0.05*i, 0));
 	}
 }
 
@@ -244,20 +277,27 @@ void init(void)
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, cor_luz);
 	glLightfv(GL_LIGHT0, GL_POSITION, posicao_luz);
 	
+	SIDEX = convert_range(0, width, minCoord.x, maxCoord.x, SIDEX);
+	SIDEY = convert_range(0, height, minCoord.y, maxCoord.y, SIDEY);
+	
+	terrain.readFromFile("terrain.ply");
+	terrain.unitize();
+	terrain.setCoordinatesLimits(minCoord, maxCoord);
+	
 	switch(menu){
 		case 0:
-			startGame.updatePosition(Point(width/2, height/2, 0));
-			startGame.setSize(100, 19);
+			startGame.updatePosition(Point(maxCoord.x/2, maxCoord.y/2, 0));
+			startGame.setSize(.07, .03);
 			startGame.setColor(0.0, 1.0, 0.0);
 			startGame.setText("Start Game");
 
-			scoreScreen.updatePosition(Point(width/2, height/2 + 50, 0));
-			scoreScreen.setSize(100, 19);
+			scoreScreen.updatePosition(Point(maxCoord.x/2, maxCoord.y/2 + .1, 0));
+			scoreScreen.setSize(0.07, 0.03);
 			scoreScreen.setColor(0.0, 1.0, 0.0);
 			scoreScreen.setText("Score");
 
-			back.updatePosition(Point(width-50, height - 50, 0));
-			back.setSize(50, 19);
+			back.updatePosition(Point(maxCoord.x-.1, maxCoord.y - .1, 0));
+			back.setSize(.07, .03);
 			back.setColor(0.0, 1.0, 0.0);
 			back.setText("Beck");
 			break;
@@ -438,33 +478,6 @@ void idle()
    	glutPostRedisplay();
 }
 
-//desenha o cursor
-void drawSquade()
-{	
-	glDisable(GL_LIGHTING);
-    glColor3f(0.0, 0.0, 1.0);
-    glBegin(GL_LINES);
-    	glVertex3f(MOUSEx, (MOUSEy-SIDE), 0);
-        glVertex3f(MOUSEx, (MOUSEy+SIDE), 0);
-        glVertex3f((MOUSEx-SIDE), MOUSEy, 0);
-        glVertex3f((MOUSEx+SIDE), MOUSEy, 0);
-    glEnd();
-    glFlush();
-    glEnable(GL_LIGHTING);
-}
-
-//desenha o terreno
-void drawTerrain(){
-	glColor4f(1.0f, 1.0f, 0.0f, 0.0f);
-	glBegin(GL_POLYGON);
-		glVertex3f(width, height - height/6, -10);
-		glVertex3f(0, height - height/6, -10);
-		glVertex3f(0, height, -10);
-		glVertex3f(width, height, -10);
-	glEnd();
-
-}
-
 void saveScore(){
 	ofstream output("scores", ios_base::app | ios_base::out);
 
@@ -500,54 +513,87 @@ void readScores(){
 	input.close();
 }
 
+//desenha o cursor
+void drawSquade()
+{	
+	glDisable(GL_LIGHTING);
+    glColor3f(0.0, 0.0, 1.0);
+    glBegin(GL_LINES);
+    	glVertex3f(MOUSEx, (MOUSEy-SIDEY), 0);
+        glVertex3f(MOUSEx, (MOUSEy+SIDEY), 0);
+        glVertex3f((MOUSEx-SIDEX), MOUSEy, 0);
+        glVertex3f((MOUSEx+SIDEX), MOUSEy, 0);
+    glEnd();
+    glFlush();
+    glEnable(GL_LIGHTING);
+}
+
+//desenha o terreno
+void drawTerrain(){
+	glPushMatrix();
+		setMaterial();
+		glColor3f(1.0f, 1.0f, 0.0f);
+		glTranslatef(.5f,0.5f, 0.0f);
+		terrain.draw(FLAT_SURFACE);
+	glPopMatrix();
+}
+
 void display(void)
 {
 	int i, ncities = cities.size(), nbatteries = batteries.size(), nmissiles = firedMissiles.size();
 	int numEnemyMissiles = enemyMissiles.size(), n;
 
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	glMatrixMode (GL_PROJECTION);
 	glLoadIdentity ();
-	glOrtho(0.0, width, height, 0.0, -30, 30);
+	glOrtho(minCoord.x, maxCoord.x, maxCoord.y, minCoord.y, minCoord.z, maxCoord.z);
 	
-	/*glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glMatrixMode (GL_PROJECTION);
-	glLoadIdentity ();
-	gluPerspective(45.0, (GLfloat) width/(GLfloat) height, 1.0, 100.0);
-
 	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity ();
-	gluLookAt (0.0, 0.0, distOrigem, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-*/
+  	glLoadIdentity();
+ 
+	if(!isOrtho){ 
+		glMatrixMode (GL_PROJECTION);
+		glLoadIdentity ();
+
+		gluPerspective(60.0, (GLfloat) width/(GLfloat) height, -100.0, 100.0);
+
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity ();
+		gluLookAt (0.5, 0.5, 2.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+	}
+	
 	drawSquade();
-	//glutSolidSphere(20, 20, 20);
+	
 	switch(menu){
 		case 0:
 			startGame.draw();
 			scoreScreen.draw();
+			
 			break;
 		case 1:{
-			//drawTerrain();
+			drawTerrain();
 
 			for(i = 0; i < nbatteries; i++){
 				batteries[i].draw();
 			}
 			
 			
-				for(i = 0; i < ncities; i++){
-					if(!cities[i].isDone())
-						cities[i].draw();
+			for(i = 0; i < ncities; i++){
+				if(!cities[i].isDone()){
+					cities[i].draw();
 				}
+			}
 			
 			for(i = 0; i < nmissiles; i++){
 				firedMissiles[i].draw();
-				firedMissiles[i].drawTarget(SIDE);
+				firedMissiles[i].drawTarget(SIDEX, SIDEY);
 			}
 
 			for(i = 0; i < numEnemyMissiles; i++){
-				if(enemyLaunched[i] && !enemyMissiles[i].isDone())
+				if(enemyLaunched[i] && !enemyMissiles[i].isDone()){
 					enemyMissiles[i].draw();
+				}
 			}
 
 			for(auto itr = explosions.begin(); itr != explosions.end(); itr++){
@@ -556,21 +602,21 @@ void display(void)
 
 			string levelTag = "Level " + to_string(level);
 			glDisable(GL_LIGHTING);
-			Drawing::drawText(width/3, 50, 1, 0, 0, 1, string(to_string(score)).c_str());
-			Drawing::drawText(2*width/3, 50, 1, 0, 0, 1, string(to_string(score1)).c_str());
-			Drawing::drawText(20, 50, 0, 1, 0, 1, levelTag.c_str());
+			Drawing::drawText(maxCoord.x/3, .03, 1, 0, 0, 1, string(to_string(score)).c_str());
+			Drawing::drawText(2*maxCoord.x/3, .03, 1, 0, 0, 1, string(to_string(score1)).c_str());
+			Drawing::drawText(.005, .03, 0, 1, 0, 1, levelTag.c_str());
 
 			if(endGame){
-				Drawing::drawText(width/2, height/2, 1, 0, 0, 1, "THE END");
-				Drawing::drawText(width/2, height/2 + 50, 0, 1, 0, 1, "Enter your name initials in the terminal.");
-			}
-			break;
+				Drawing::drawText(maxCoord.x/2, maxCoord.y/2, 1, 0, 0, 1, "THE END");
+				Drawing::drawText(maxCoord.x/2, maxCoord.y/2 + .1, 0, 1, 0, 1, "Enter your name initials in the terminal.");
 			}
 			glEnable(GL_LIGHTING);
+			break;
+		}
 		case 2:
 			n = (scores.size() > 10)?10:scores.size();
 			glDisable(GL_LIGHTING);
-			Drawing::drawText(width/2 -30, 100, 0, 1, 0, 1, "SCORES");
+			Drawing::drawText(maxCoord.x/2 - .07, .25, 0, 1, 0, 1, "SCORES");
 
 			for(auto itr = scores.begin(); itr != (scores.begin()+10); itr++){
 				(*itr).draw();
@@ -597,18 +643,16 @@ void reshape (int w, int h){
 
 // Motion callback
 void motion(int x, int y )
-{
-	MOUSEx=x;
-	MOUSEy=y;
-
-	if (MOUSEy > 550 && menu == 1){
-	 MOUSEx=x;
-	 MOUSEy=550;
+{	
+	if (y > 550 && menu == 1){
+	 	y=550;
 	}
+	MOUSEx=convert_range(0, width, minCoord.x, maxCoord.x, x);
+	MOUSEy=convert_range(0, height, minCoord.y, maxCoord.y, y);
 }
 
 //Retorna o id da bateria mais próxima da posição (x, y)
-int findNearestBattery(int x, int y){
+int findNearestBattery(float x, float y){
 	int i, n = batteries.size();
 	float dist = 100000, batId = -1, d = -1;
 	Point p;
@@ -639,6 +683,9 @@ void mouse(int button, int state, int x, int y){
 		MOUSEx=x;
 		MOUSEy=550;
 	}
+	MOUSEx=convert_range(0, width, minCoord.x, maxCoord.x, MOUSEx);
+	MOUSEy=convert_range(0, height, minCoord.y, maxCoord.y, MOUSEy);
+	
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
 		switch(menu){
 			case 0:
@@ -660,8 +707,9 @@ void mouse(int button, int state, int x, int y){
 				if(id == -1) return ;
 
 				p = batteries[id].getPosition();
-
-				p.y -= 20;
+				
+				p.x += .025;
+				p.y -= .004;
 				if(!batteries[id].isEmpty() && !batteries[id].isDone()){
 					Missile m = batteries[id].fire(p, Point(MOUSEx, MOUSEy, 0));
 
@@ -689,20 +737,17 @@ void keyboard (unsigned char key, int x, int y)
 			exit(0);
 			break;
 		case 32:
-			if(!paused){
-				paused = true;
-			}else paused = false;
+			paused = !paused;
 			break;
 		case '+' :
 			distOrigem--;
-			cout << distOrigem << endl;
-	    	// if(distOrigem<20) distOrigem=20;
-		break;
+			break;
+		case 'p':
+			isOrtho = !isOrtho;
+			break;
 		case '-' :
 			distOrigem++;
-			cout << distOrigem << endl;
- 			//if(distOrigem>180) distOrigem=180;
-		break;
+			break;
 		case 'r':
 			restart_game();
 			break;

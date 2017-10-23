@@ -4,7 +4,7 @@
 using namespace std;
 
 namespace Drawing{
-	void drawText(int x, int y, float r, float g, float b, int font, const char *string){
+	void drawText(float x, float y, float r, float g, float b, int font, const char *string){
 		glColor3f( r, g, b );
 		glRasterPos3f(x, y, 10);
 		int len, i;
@@ -15,7 +15,7 @@ namespace Drawing{
 		}
 	}
 
-	void drawEllipse(int x, int y, int z, float r, float g, float b, int xradius, int yradius, int npartes){
+	void drawEllipse(float x, float y, float z, float r, float g, float b, float xradius, float yradius, int npartes){
 		glColor4f(r, g, b, 0.0f);
 		glBegin(GL_POLYGON);
 			for(int ii = 0; ii < npartes; ii++)

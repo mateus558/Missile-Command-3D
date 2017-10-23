@@ -19,6 +19,7 @@ public:
 	void scale(float scaleFactor);
 	void draw(DrawMode t);
 	void unitize();
+	void setCoordinatesLimits(Point cmin, Point cmax);
 	int getTrianglesNumber();
 	
 private:
@@ -26,11 +27,14 @@ private:
 	bool centralized = false;
 	int facePoints = 0;
 	Point min, max;
+	Point coorMin, coordMax;
 
 	std::vector<Point> points;
 	std::vector<Point> normals;
 	std::vector<Point> colors;
 	std::vector<std::vector<int> > faces;
+
+	void findMinMaxLimits();
 };
 
 #endif

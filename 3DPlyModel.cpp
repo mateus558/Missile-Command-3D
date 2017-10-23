@@ -8,6 +8,50 @@
 
 using namespace std;
 
+float convertRange(float amin, float amax, float bmin, float bmax, float input){
+	return bmin + ((bmax - bmin) / (amax - amin)) * (input - amin);
+}
+
+void PlyModel::findMinMaxLimits(){
+	int i, n = points.size();
+	
+	if(!minMaxAxisComputed){
+		for(i = 0; i < n; i++){
+			if(points[i].x < min.x){
+				min.x = points[i].x;
+			}
+			if(points[i].y < min.y){
+				min.y = points[i].y;
+			}
+			if(points[i].z < min.z){
+				min.z = points[i].z;
+			}
+			if(points[i].x > max.x){
+				max.x = points[i].x;
+			}
+			if(points[i].y > max.y){
+				max.y = points[i].y;
+			}
+			if(points[i].z > max.z){
+				max.z = points[i].z;
+			}
+		}
+		minMaxAxisComputed = !minMaxAxisComputed;
+	}
+}
+
+void PlyModel::setCoordinatesLimits(Point cmin, Point cmax){
+	int i, n = points.size();
+	
+	findMinMaxLimits();
+
+	for(i = 0; i < n; i++){
+		points[i].x = convertRange(min.x, max.x, cmin.x, cmax.x, points[i].x);
+		points[i].y = convertRange(min.y, max.y, cmin.y, cmax.y, points[i].y);
+		points[i].z = convertRange(min.z, max.z, cmin.z, cmax.z, points[i].z);
+	}
+}
+
 void PlyModel::readFromFile(const char* fileName){
 	bool dimSet = 0, endWhile = false;
 	int np, nf, i, j, dim;
@@ -116,26 +160,7 @@ void PlyModel::unitize(){
 	float cx, cy, cz, scaleFactor, w, h, d;
 	
 	if(!centralized){
-		for(i = 0; i < n; i++){
-			if(points[i].x < min.x){
-				min.x = points[i].x;
-			}
-			if(points[i].y < min.y){
-				min.y = points[i].y;
-			}
-			if(points[i].z < min.z){
-				min.z = points[i].z;
-			}
-			if(points[i].x > max.x){
-				max.x = points[i].x;
-			}
-			if(points[i].y > max.y){
-				max.y = points[i].y;
-			}
-			if(points[i].z > max.z){
-				max.z = points[i].z;
-			}
-		}
+		findMinMaxLimits();
 		
 		cx = (max.x - min.x) / 2.0f;
 		cy = (max.y - min.y) / 2.0f;
@@ -219,7 +244,6 @@ void PlyModel::draw(DrawMode t){
 							glNormal3f(normals[faces[i][j]].x, normals[faces[i][j]].y, normals[faces[i][j]].z);
 						}
 						glVertex3f(points[faces[i][j]].x, points[faces[i][j]].y, points[faces[i][j]].z);
-						
 					}
 				glEnd();
 			}

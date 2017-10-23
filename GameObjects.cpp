@@ -7,6 +7,7 @@
 
 using namespace std;
 
+Point minCoordi(0.0f, 0.0f, -100.0f), maxCoordi(1.0f, 1.0f, 100.0f);
 
 /***********************************************
  *           Object Member Functions           *
@@ -17,8 +18,8 @@ Object::Object(){}
 void Object::load3DModel(const char* file){
 	model_3d.readFromFile(file);
 	model_3d.unitize();
+	model_3d.setCoordinatesLimits(minCoordi, maxCoordi);
 	model_3d.computeNormals();
-	model_3d.scale(20);
 }
 
 void Object::setMass(float mass){
@@ -90,8 +91,8 @@ void Missile::update(float dt){
 	if(!done){
 		pos.x += vel.x * dt * tx;
 		pos.y += vel.y * dt * ty;
-
-		if(pos.distance(goal_pos) <= 3){
+		
+		if(pos.distance(goal_pos) <= 0.001){
 			fired = false;
 			exploded = true;
 		}
@@ -117,14 +118,14 @@ vector<Missile> Missile::divide(int level){
 	return missiles;
 }
 
-void Missile::drawTarget(int side){
+void Missile::drawTarget(float sidex, float sidey){
 	if(!done){
 		glColor4f(Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0), 0.0);
 		glBegin(GL_LINES);
-			glVertex2f(goal_pos.x-side, goal_pos.y-side);
-		    glVertex2f(goal_pos.x+side, goal_pos.y+side);
-		    glVertex2f(goal_pos.x+side, goal_pos.y-side);
-		    glVertex2f(goal_pos.x-side, goal_pos.y+side);
+			glVertex2f(goal_pos.x-sidex, goal_pos.y-sidey);
+		    glVertex2f(goal_pos.x+sidex, goal_pos.y+sidey);
+		    glVertex2f(goal_pos.x+sidex, goal_pos.y-sidey);
+		    glVertex2f(goal_pos.x-sidex, goal_pos.y+sidey);
 		glEnd();
 	}
 }
@@ -143,18 +144,19 @@ void Missile::draw(){
 
 		glColor4f(Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0), 0.0);
 		glBegin(GL_QUADS);
-			glVertex3f(pos.x-1.0, pos.y+1.0, 0.0);
-			glVertex3f(pos.x+1.0, pos.y+1.0, 0.0);
-			glVertex3f(pos.x+1.0, pos.y-1.0, 0.0);
-			glVertex3f(pos.x-1.0, pos.y-1.0, 0.0);
+			
+			glVertex3f(pos.x-0.001, pos.y+0.001, 0.0);
+			glVertex3f(pos.x+0.001, pos.y+0.001, 0.0);
+			glVertex3f(pos.x+0.001, pos.y-0.001, 0.0);
+			glVertex3f(pos.x-0.001, pos.y-0.001, 0.0);
 		glEnd();
 	}else if(!fired && (!exploded && !done)){
 		glColor4f(color[0], color[1], color[2], 0.0);
 		glBegin(GL_QUADS);
-			glVertex3f(pos.x-4.0, pos.y+4.0, 0.0);
-			glVertex3f(pos.x+4.0, pos.y+4.0, 0.0);
-			glVertex3f(pos.x+4.0, pos.y-4.0, 0.0);
-			glVertex3f(pos.x-4.0, pos.y-4.0, 0.0);
+			glVertex3f(pos.x-0.004, pos.y+0.004, 0.0);
+			glVertex3f(pos.x+0.004, pos.y+0.004, 0.0);
+			glVertex3f(pos.x+0.004, pos.y-0.004, 0.0);
+			glVertex3f(pos.x-0.004, pos.y-0.004, 0.0);
 		glEnd();
 	}
 	glEnable(GL_LIGHTING);
@@ -182,13 +184,13 @@ void Battery::init(){
 	for(i = 0; i < 4; i++){
 		for(j = i; j < 4; j++){
 			missiles[k].setColor(color[0], color[1], color[2]);
-			missiles[k].updatePosition(Point(pos.x + j*10 - i*5, pos.y - i*10 , 0));
-			missiles[k].setVelocities(Point(1.5, 1.5, 0));
+			missiles[k].updatePosition(Point(pos.x + j*1.009 - i*1.0045, pos.y - i*1.009 , 0));
+			missiles[k].setVelocities(Point(vel.x, vel.y, 0));
 			k++;
 		}
 	}
 
-	pos = Point(pos.x + 15, pos.y - 15, 0);
+	//pos = Point(pos.x + 0.01, pos.y - 0.01, 0);
 
 }
 
@@ -197,10 +199,7 @@ void Battery::reload(){
 
 	missiles.clear();
 	missiles.resize(10);
-
-	pos.x -= 15;
-	pos.y += 15;
-
+	
 	init();
 }
 
@@ -234,16 +233,14 @@ void Battery::update(float dt){
 void Battery::draw(){
 	int i, n = missiles.size();
 
-	if(!done)
-		for(i = 0; i < n; i++){
-			missiles[i].draw();
-		}
-
-	if(n == 0 || done){
-		Drawing::drawText(pos.x-18, pos.y + 50, 0, 0, 1, 1, "OUT");
-	}else if(n <= 3){
-		Drawing::drawText(pos.x-18, pos.y + 50, 0, 0, 1, 1, "LOW");
-	}
+	if(!done){
+		glPushMatrix();
+			glColor3f(color[0], color[1], color[2]);
+			glTranslatef(pos.x, pos.y, pos.z);
+			glScalef(0.05, 0.05, 0.05);
+			model_3d.draw(FLAT_SURFACE);
+		glPopMatrix();
+	}	
 }
 
 /***********************************************
@@ -257,13 +254,11 @@ void City::update(float dt){
 void City::draw(){
 	glPushMatrix();
 		glColor3f(0, 0, 1);
-
 		glTranslatef(pos.x, pos.y, pos.z);
+		glScalef(0.05, 0.05, 0.05);
+		
 		model_3d.draw(FLAT_SURFACE);
 	glPopMatrix();
-	/*glutSolidSphere(20,20,20);*/
-	//Drawing::drawEllipse(pos.x, pos.y, 0, 0.0, 0.5, 1.0, 30, 20, 8);
-	//Drawing::drawEllipse(pos.x, pos.y, 1, 0, 0, 1, 18, 10, 8);
 }
 
 /***********************************************
@@ -272,10 +267,12 @@ void City::draw(){
 
 void Explosion::draw(){
 	Random::init();
-	//glutSolidSphere();
-	glDisable(GL_LIGHTING);
-	Drawing::drawEllipse(pos.x, pos.y, 6, Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0), initRadius, initRadius, Random::intInRange(5, 15));
-	glEnable(GL_LIGHTING);
+	glPushMatrix();
+		glColor3f(Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0));
+		glTranslatef(pos.x, pos.y, pos.z);
+
+		glutSolidSphere(initRadius, 100, 100);
+	glPopMatrix();
 }
 
 bool Explosion::isColliding(Object obj){
@@ -290,7 +287,7 @@ void Explosion::update(float dt){
 		signal = -1;
 	}
 
-	initRadius += signal * 15 * dt;
+	initRadius += signal * .05 * dt;
 
 	if(initRadius <= 0 && signal == -1){
 		finished = true;
@@ -310,7 +307,7 @@ bool Explosion::isFinished(){
  *           Button Member Function            *
  ***********************************************/
 
-void Button::setSize(int x, int y){
+void Button::setSize(float x, float y){
 	size.x = x;
 	size.y = y;
 }
@@ -319,7 +316,7 @@ void Button::setText(string text){
 	this->text = text;
 }
 
-bool Button::clicked(int x, int y){
+bool Button::clicked(float x, float y){
 	if(x > (pos.x - size.x) && x < (pos.x + size.x)){
 		if(y > (pos.y - size.y) && y < (pos.y + size.y)){
 			return true;
@@ -336,7 +333,7 @@ void Button::update(float dt){
 void Button::draw(){
 	glDisable(GL_LIGHTING);
 	glColor3f(color[0], color[1], color[2]);
-
+	
 	glBegin(GL_POLYGON);		
 		glVertex3f(pos.x + size.x, pos.y - size.y, 0);
 		glVertex3f(pos.x - size.x, pos.y - size.y, 0);
@@ -364,7 +361,7 @@ void Score::setScore(int score){
 void Score::draw(){
 	glDisable(GL_LIGHTING);
 	Drawing::drawText(pos.x, pos.y, 1, 0, 0, 1, text.c_str());
-	Drawing::drawText(pos.x + 150, pos.y, 1, 0, 0, 1, to_string(score).c_str());
+	Drawing::drawText(pos.x + .1, pos.y, 1, 0, 0, 1, to_string(score).c_str());
 	glEnable(GL_LIGHTING);
 }
 
