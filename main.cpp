@@ -12,7 +12,7 @@
 
 using namespace std;
 
-int width = 1080, height = 720, level = 1, launchedEnemies = 0, nMissilesRain = 0;
+int width = 1080, height = 760, level = 1, launchedEnemies = 0, nMissilesRain = 0;
 int score = 0, score1 = 7500, citiesExplodedItr = 0, enemyExplodedItr = 0, enemyExplodedNum = 0, batteriesExplodedItr = 0;
 int menu = 0, citiesExplodedNum = 0;
 int nMissiles = 10;
@@ -21,10 +21,12 @@ string playerName;
 Button startGame, scoreScreen, back;
 float Dt;
 bool endLevel, fullscreen = false, endGame = false, scoreSaved = false, paused = false, isOrtho = true;
-
+float angleCam = 120;
 Point minCoord(0.0f, 0.0f, -100.0f), maxCoord(1.0f, 1.0f, 100.0f);
+Point eye(0.0, 1.0, 3.39), center(0.0, 0.0, 0.0); 
+//Point eye(.53, -0.06, 3.39), center(0.56, 0.65, -0.41); 
 GLfloat cor_luz[]		= { 1.0f, 1.0f, 1.0f, 1.0};
-GLfloat posicao_luz[]   = { maxCoord.x/2, maxCoord.y/2 + 300, -20.0, 1.0};
+GLfloat posicao_luz[]   = { maxCoord.x/2, maxCoord.y/2, -1.0, 1.0};
 
 PlyModel terrain;
 vector<Battery> batteries(3);
@@ -310,6 +312,46 @@ void init(void)
 	}
 }
 
+
+
+void partMissiles(){
+	int i, n = enemyMissiles.size(), j, k;
+	Point goal, from;
+	vector<Missile> lanced;
+	
+	for(i = 0; i < n; i++){
+		if(!enemyMissiles[i].isDone()){
+			lanced = enemyMissiles[i].divide(level);
+			
+			if(!lanced.empty()){
+				k = enemyMissiles.size() - 1;
+				enemyMissiles.insert(enemyMissiles.end(), lanced.begin(), lanced.end());
+				
+				vector<City*> notDoneCity;
+				vector<Battery*> notDoneBat;
+
+				//Pega apenas as cidades que não foram destruidas
+				for(j = 0; j < cities.size(); j++){
+					if(!cities[j].isDone()){
+						notDoneCity.push_back(NULL);
+						notDoneCity[notDoneCity.size()-1] = &cities[j];
+					}
+				}
+
+				//Pega apenas as baterias que não foram destruidas
+				for(j = 0; j < batteries.size(); j++){
+					if(!batteries[j].isDone()){
+						notDoneBat.push_back(NULL);
+						notDoneBat[notDoneBat.size()-1] = &batteries[j];
+					}
+				}
+
+				if(notDoneCity.size() == 0) return ;	
+			}
+		}
+	}
+}
+
 template <class T>
 void verifyExplosionCollision(vector<T> &obj, int &n){
 	int i, j, size = obj.size();
@@ -524,7 +566,6 @@ void drawSquade()
         glVertex3f((MOUSEx-SIDEX), MOUSEy, 0);
         glVertex3f((MOUSEx+SIDEX), MOUSEy, 0);
     glEnd();
-    glFlush();
     glEnable(GL_LIGHTING);
 }
 
@@ -548,30 +589,35 @@ void display(void)
 	glMatrixMode (GL_PROJECTION);
 	glLoadIdentity ();
 	glOrtho(minCoord.x, maxCoord.x, maxCoord.y, minCoord.y, minCoord.z, maxCoord.z);
-	
-	glMatrixMode(GL_MODELVIEW);
-  	glLoadIdentity();
- 
+	gluLookAt (0.0, 0.2, 80.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+		 
 	if(!isOrtho){ 
 		glMatrixMode (GL_PROJECTION);
 		glLoadIdentity ();
 
-		gluPerspective(60.0, (GLfloat) width/(GLfloat) height, -100.0, 100.0);
-
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity ();
-		gluLookAt (0.5, 0.5, 2.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+		gluPerspective(angleCam, (GLfloat) width/(GLfloat) height, 1.0, 1000.0);
+		gluLookAt (eye.x, eye.y, eye.z, center.x, center.y, center.z, 0.0, -1.0, 0.0);
+		                //gluLookAt(100.0, 0.0, 230.0, 100.0, 0.0, 60.0, 0.0, 1.0, 0.0);
 	}
 	
-	drawSquade();
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity ();
 	
+	drawSquade();
+
 	switch(menu){
 		case 0:
+			glMatrixMode (GL_PROJECTION);
+			glLoadIdentity ();
+			glOrtho(minCoord.x, maxCoord.x, maxCoord.y, minCoord.y, minCoord.z, maxCoord.z);
+			gluLookAt (0.0, 0.0, 80.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+			
 			startGame.draw();
 			scoreScreen.draw();
 			
 			break;
 		case 1:{
+			
 			drawTerrain();
 
 			for(i = 0; i < nbatteries; i++){
@@ -599,9 +645,14 @@ void display(void)
 			for(auto itr = explosions.begin(); itr != explosions.end(); itr++){
 				(*itr).draw();
 			}
-
-			string levelTag = "Level " + to_string(level);
+			
+			glMatrixMode (GL_PROJECTION);
+			glLoadIdentity ();
+			glOrtho(minCoord.x, maxCoord.x, maxCoord.y, minCoord.y, minCoord.z, maxCoord.z);
+			gluLookAt (0.0, 0.0, 80.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 			glDisable(GL_LIGHTING);
+			
+			string levelTag = "Level " + to_string(level);
 			Drawing::drawText(maxCoord.x/3, .03, 1, 0, 0, 1, string(to_string(score)).c_str());
 			Drawing::drawText(2*maxCoord.x/3, .03, 1, 0, 0, 1, string(to_string(score1)).c_str());
 			Drawing::drawText(.005, .03, 0, 1, 0, 1, levelTag.c_str());
@@ -614,8 +665,14 @@ void display(void)
 			break;
 		}
 		case 2:
+			glMatrixMode (GL_PROJECTION);
+			glLoadIdentity ();
+			glOrtho(minCoord.x, maxCoord.x, maxCoord.y, minCoord.y, minCoord.z, maxCoord.z);
+			gluLookAt (0.0, 0.0, 80.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+			
 			n = (scores.size() > 10)?10:scores.size();
 			glDisable(GL_LIGHTING);
+			
 			Drawing::drawText(maxCoord.x/2 - .07, .25, 0, 1, 0, 1, "SCORES");
 
 			for(auto itr = scores.begin(); itr != (scores.begin()+10); itr++){
@@ -754,6 +811,51 @@ void keyboard (unsigned char key, int x, int y)
 		case 'm':
 			menu = 0;
 			restart_game();
+			break;
+		case 'w':
+			eye.y += .01;
+			break;
+		case 'a':
+			eye.x -= .01;
+			break;
+		case 's':
+			eye.y -= .01;
+			break;
+		case 'd':
+			eye.x += .01;
+			break;
+		case 'q':
+			eye.z -= .01;
+			break;
+		case 'e':
+			eye.z += .01;
+			break;
+		case '8':
+			center.y += .01;
+			break;
+		case '4':
+			center.x -= .01;
+			break;
+		case '2':
+			center.y -= .01;
+			break;
+		case '6':
+			center.x += .01;
+			break;
+		case '3':
+			center.z -= .01;
+			break;
+		case '9':
+			center.z += .01;
+			break;
+		case '7':
+			angleCam += 1;
+			break;
+		case '1':
+			angleCam -= 1;
+			break;
+		case '5':
+			cout << eye << " " << center << " " << angleCam << endl;
 			break;
 		default:
 			break;

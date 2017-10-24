@@ -106,7 +106,7 @@ void Missile::fire(){
 }
 
 vector<Missile> Missile::divide(int level){
-	int n = level, chance = 20 + (level * 2);
+	int n = level, chance = 2 + (level * 2);
 	vector<Missile> missiles;
 
 	if(pos.y > 300){
@@ -143,13 +143,17 @@ void Missile::draw(){
 		glEnd();
 
 		glColor4f(Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0), 0.0);
-		glBegin(GL_QUADS);
+		/*glBegin(GL_QUADS);
 			
 			glVertex3f(pos.x-0.001, pos.y+0.001, 0.0);
 			glVertex3f(pos.x+0.001, pos.y+0.001, 0.0);
 			glVertex3f(pos.x+0.001, pos.y-0.001, 0.0);
 			glVertex3f(pos.x-0.001, pos.y-0.001, 0.0);
-		glEnd();
+		glEnd();*/
+		glPushMatrix();
+			glTranslatef(pos.x, pos.y, pos.z);
+			glutSolidSphere(0.002, 30, 30);
+		glPopMatrix(); 
 	}else if(!fired && (!exploded && !done)){
 		glColor4f(color[0], color[1], color[2], 0.0);
 		glBegin(GL_QUADS);
@@ -268,7 +272,8 @@ void City::draw(){
 void Explosion::draw(){
 	Random::init();
 	glPushMatrix();
-		glColor3f(Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0));
+		glColor3f(1.0, 0.0, 0.0);
+		//glColor3f(Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0));
 		glTranslatef(pos.x, pos.y, pos.z);
 
 		glutSolidSphere(initRadius, 100, 100);

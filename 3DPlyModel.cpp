@@ -48,7 +48,7 @@ void PlyModel::setCoordinatesLimits(Point cmin, Point cmax){
 	for(i = 0; i < n; i++){
 		points[i].x = convertRange(min.x, max.x, cmin.x, cmax.x, points[i].x);
 		points[i].y = convertRange(min.y, max.y, cmin.y, cmax.y, points[i].y);
-		points[i].z = convertRange(min.z, max.z, cmin.z, cmax.z, points[i].z);
+		points[i].z = convertRange(min.z, max.z, -50, 50, points[i].z);
 	}
 }
 
