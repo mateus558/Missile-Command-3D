@@ -14,7 +14,7 @@ protected:
 	float mass;
 	Point vel, acel;
 	//Cor RGB do objeto
-	float color[3];
+	float color[3], scale[3];
 	bool exploded = false, done = false;
 	//Posição atual e anterior do objeto
 	Point pos, lastPos;
@@ -37,6 +37,7 @@ public:
 	void setAceleration(Point acel);
 	//Define a cor RGB do objeto
 	void setColor(float r, float g, float b);
+	void setScale(float x, float y, float z);
 	void explode();
 	bool isExploding();
 	bool isDone();
@@ -44,6 +45,12 @@ public:
 	virtual void update(float dt){};
 	//Função para desenhar um objeto
 	virtual void draw(){};
+};
+
+class Terrain : public Object {
+	public:
+	void draw();
+	private:
 };
 
 class Missile : public Object {

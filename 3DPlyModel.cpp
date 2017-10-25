@@ -235,15 +235,15 @@ void PlyModel::draw(DrawMode t){
 		case FLAT_SURFACE:
 			//glColor3f(0,.3,0);
 			for(i = 0; i < nf; i++){
-				if(!hasNormals && normalComputed){
-					glNormal3f(normals[i].x, normals[i].y, normals[i].z);
-				}
 				glBegin(GL_TRIANGLE_FAN);
 					for(j = 0; j < facePoints; j++){
-						if(hasNormals){	
+						if(!hasNormals && normalComputed){
+							glNormal3f(normals[i].x, normals[i].y, normals[i].z);
+						}else if(hasNormals){	
 							glNormal3f(normals[faces[i][j]].x, normals[faces[i][j]].y, normals[faces[i][j]].z);
 						}
 						glVertex3f(points[faces[i][j]].x, points[faces[i][j]].y, points[faces[i][j]].z);
+						//cout << points[faces[i][j]] << endl;
 					}
 				glEnd();
 			}

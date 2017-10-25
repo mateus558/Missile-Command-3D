@@ -28,7 +28,7 @@ Point eye(0.0, 1.0, 3.39), center(0.0, 0.0, 0.0);
 GLfloat cor_luz[]		= { 1.0f, 1.0f, 1.0f, 1.0};
 GLfloat posicao_luz[]   = { maxCoord.x/2, maxCoord.y/2, -1.0, 1.0};
 
-PlyModel terrain;
+Terrain terrain;
 vector<Battery> batteries(3);
 vector<City> cities(6);
 vector<Missile> firedMissiles;
@@ -52,7 +52,7 @@ void init_enemies();
 void init_game();
 void init_scores();
 void init();
-void drawTerrain();
+//void drawTerrain();
 void output(int x, int y, float r, float g, float b, int font, const char *string);
 void saveScore();
 void readScores();
@@ -145,7 +145,7 @@ void init_batteries(){
 		
 		if(i == 0) pos = convert_range(0, width, minCoord.x, maxCoord.x, 60); else if(i == 1) pos = convert_range(0, width, minCoord.x, maxCoord.x, -80); else pos = convert_range(0, width, minCoord.x, maxCoord.x, -240);
 		if(i == 0) x += .02; else if(i == 1) x -= .05; else x -= .228;
-    	batteries[i].setColor(r,g,b);
+
 		x += convert_range(0, width, minCoord.x, maxCoord.x, i*(width/2 + 80) + pos);
 		y += convert_range(0, height, minCoord.y, maxCoord.y, height - 100);
 		
@@ -153,6 +153,8 @@ void init_batteries(){
 		batteries[i].updatePosition(Point(x, y, 0));
 		batteries[i].init();
 		batteries[i].load3DModel("cube.ply");
+		batteries[i].setColor(r,g,b);
+		batteries[i].setScale(0.05, 0.05, 0.05);
 	}
 }
 
@@ -173,6 +175,8 @@ void init_cities(){
 	}
 	for(i = 0; i < n; i++){
 		cities[i].load3DModel("cube.ply");
+		cities[i].setColor(0, 0 , 1);
+		cities[i].setScale(.05, .05, .05);
 	}
 }
 
@@ -272,19 +276,17 @@ void init(void)
 	glEnable(GL_LIGHT0);                   // habilita luz 0
 	glEnable(GL_NORMALIZE);
 	glEnable(GL_COLOR_MATERIAL);
+	//glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	
-	// Posicao da fonte de luz. Ultimo parametro define se a luz sera direcional (0.0) ou tera uma posicional (1.0)
-	glLightfv(GL_LIGHT0, GL_AMBIENT, cor_luz);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, cor_luz);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, cor_luz);
 	glLightfv(GL_LIGHT0, GL_POSITION, posicao_luz);
 	
 	SIDEX = convert_range(0, width, minCoord.x, maxCoord.x, SIDEX);
 	SIDEY = convert_range(0, height, minCoord.y, maxCoord.y, SIDEY);
 	
-	terrain.readFromFile("terrain.ply");
-	terrain.unitize();
-	terrain.setCoordinatesLimits(minCoord, maxCoord);
+	terrain.load3DModel("terrain.ply");
+	terrain.updatePosition(Point(0.5, .7, 0));
+	terrain.setScale(0.05, 0.05, 0.05);
+	terrain.setColor(.5, .5, 0);
 	
 	switch(menu){
 		case 0:
@@ -570,14 +572,14 @@ void drawSquade()
 }
 
 //desenha o terreno
-void drawTerrain(){
+/*void drawTerrain(){
 	glPushMatrix();
 		setMaterial();
 		glColor3f(1.0f, 1.0f, 0.0f);
 		glTranslatef(.5f,0.5f, 0.0f);
 		terrain.draw(FLAT_SURFACE);
 	glPopMatrix();
-}
+}*/
 
 void display(void)
 {
@@ -585,25 +587,31 @@ void display(void)
 	int numEnemyMissiles = enemyMissiles.size(), n;
 
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+	glLoadIdentity();
+	        
 	glMatrixMode (GL_PROJECTION);
 	glLoadIdentity ();
+	
 	glOrtho(minCoord.x, maxCoord.x, maxCoord.y, minCoord.y, minCoord.z, maxCoord.z);
 	gluLookAt (0.0, 0.2, 80.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-		 
-	if(!isOrtho){ 
-		glMatrixMode (GL_PROJECTION);
-		glLoadIdentity ();
-
-		gluPerspective(angleCam, (GLfloat) width/(GLfloat) height, 1.0, 1000.0);
-		gluLookAt (eye.x, eye.y, eye.z, center.x, center.y, center.z, 0.0, -1.0, 0.0);
-		                //gluLookAt(100.0, 0.0, 230.0, 100.0, 0.0, 60.0, 0.0, 1.0, 0.0);
-	}
 	
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity ();
 	
 	drawSquade();
+		 
+	if(!isOrtho){ 
+		glLoadIdentity ();
+		glMatrixMode (GL_PROJECTION);
+		glLoadIdentity ();
+
+		gluPerspective(angleCam, (GLfloat) width/(GLfloat) height, 1.0, 1000.0);
+		gluLookAt (eye.x, eye.y, eye.z, center.x, center.y, center.z, 0.0, -1.0, 0.0);
+		gluLookAt(100.0, 0.0, 230.0, 100.0, 0.0, 60.0, 0.0, 1.0, 0.0);
+		
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity ();
+	}
 
 	switch(menu){
 		case 0:
@@ -612,14 +620,16 @@ void display(void)
 			glOrtho(minCoord.x, maxCoord.x, maxCoord.y, minCoord.y, minCoord.z, maxCoord.z);
 			gluLookAt (0.0, 0.0, 80.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 			
+			drawSquade();		
 			startGame.draw();
 			scoreScreen.draw();
 			
 			break;
 		case 1:{
-			
-			drawTerrain();
+			setMaterial();
 
+			terrain.draw();
+			
 			for(i = 0; i < nbatteries; i++){
 				batteries[i].draw();
 			}
@@ -667,6 +677,7 @@ void display(void)
 		case 2:
 			glMatrixMode (GL_PROJECTION);
 			glLoadIdentity ();
+			
 			glOrtho(minCoord.x, maxCoord.x, maxCoord.y, minCoord.y, minCoord.z, maxCoord.z);
 			gluLookAt (0.0, 0.0, 80.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 			

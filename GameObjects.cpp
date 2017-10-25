@@ -40,6 +40,12 @@ void Object::setColor(float r, float g, float b){
 	color[2] = b;
 }
 
+void Object::setScale(float x, float y, float z){
+	scale[0] = x;
+	scale[1] = y;
+	scale[2] = z;
+}
+
 void Object::updatePosition(Point pos){
 	this->pos = pos;
 }
@@ -67,6 +73,16 @@ bool Object::isExploding(){
 
 bool Object::isDone(){
 	return done;
+}
+
+void Terrain::draw(){
+	glPushMatrix();
+		glColor3f(color[0], color[1], color[2]);
+		glTranslatef(pos.x, pos.y, pos.z);
+		glScalef(scale[0], scale[1], scale[2]);
+		
+		model_3d.draw(FLAT_SURFACE);
+	glPopMatrix();
 }
 
 /***********************************************
@@ -133,28 +149,24 @@ void Missile::drawTarget(float sidex, float sidey){
 void Missile::draw(){
 	if(done || exploded) return;
 
-	glDisable(GL_LIGHTING);
-	glColor4f(color[0], color[1], color[2], 0.0);
-
 	if(fired){
+		glDisable(GL_LIGHTING);
+		glColor4f(color[0], color[1], color[2], 0.0);
+		
 		glBegin(GL_LINES);
 			glVertex3f(from.x, from.y, 0.0f);
 			glVertex3f(pos.x, pos.y, 0.0f);
 		glEnd();
-
+		glEnable(GL_LIGHTING);
+		
 		glColor4f(Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0), 0.0);
-		/*glBegin(GL_QUADS);
-			
-			glVertex3f(pos.x-0.001, pos.y+0.001, 0.0);
-			glVertex3f(pos.x+0.001, pos.y+0.001, 0.0);
-			glVertex3f(pos.x+0.001, pos.y-0.001, 0.0);
-			glVertex3f(pos.x-0.001, pos.y-0.001, 0.0);
-		glEnd();*/
+
 		glPushMatrix();
 			glTranslatef(pos.x, pos.y, pos.z);
-			glutSolidSphere(0.002, 30, 30);
+			glutSolidSphere(0.004, 30, 30);
 		glPopMatrix(); 
 	}else if(!fired && (!exploded && !done)){
+		glDisable(GL_LIGHTING);
 		glColor4f(color[0], color[1], color[2], 0.0);
 		glBegin(GL_QUADS);
 			glVertex3f(pos.x-0.004, pos.y+0.004, 0.0);
@@ -162,8 +174,8 @@ void Missile::draw(){
 			glVertex3f(pos.x+0.004, pos.y-0.004, 0.0);
 			glVertex3f(pos.x-0.004, pos.y-0.004, 0.0);
 		glEnd();
+		glEnable(GL_LIGHTING);
 	}
-	glEnable(GL_LIGHTING);
 }
 
 void Missile::operator=(const Missile& p){
@@ -213,6 +225,7 @@ Missile Battery::fire(Point from, Point goal){
 	missiles[0].setFrom(from);
 	missiles[0].fire();
 	Missile m = *missiles.begin();
+	m.setColor(color[0], color[1], color[2]);
 	missiles.erase(missiles.begin());
 
 	if(missiles.size() == 0){
@@ -241,7 +254,8 @@ void Battery::draw(){
 		glPushMatrix();
 			glColor3f(color[0], color[1], color[2]);
 			glTranslatef(pos.x, pos.y, pos.z);
-			glScalef(0.05, 0.05, 0.05);
+			glScalef(scale[0], scale[1], scale[2]);
+		
 			model_3d.draw(FLAT_SURFACE);
 		glPopMatrix();
 	}	
@@ -257,9 +271,9 @@ void City::update(float dt){
 
 void City::draw(){
 	glPushMatrix();
-		glColor3f(0, 0, 1);
+		glColor3f(color[0], color[1], color[2]);
 		glTranslatef(pos.x, pos.y, pos.z);
-		glScalef(0.05, 0.05, 0.05);
+		glScalef(scale[0], scale[1], scale[2]);
 		
 		model_3d.draw(FLAT_SURFACE);
 	glPopMatrix();
