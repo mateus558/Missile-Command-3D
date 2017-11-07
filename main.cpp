@@ -21,10 +21,10 @@ string playerName;
 Button startGame, scoreScreen, back;
 float Dt;
 bool endLevel, fullscreen = false, endGame = false, scoreSaved = false, paused = false, isOrtho = true;
-float angleCam = 120;
+float angleCam = 30;
 Point minCoord(0.0f, 0.0f, -100.0f), maxCoord(1.0f, 1.0f, 100.0f);
-Point eye(0.0, 1.0, 3.39), center(0.0, 0.0, 0.0); 
-//Point eye(.53, -0.06, 3.39), center(0.56, 0.65, -0.41); 
+//Point eye(0.5, -0.11, -0.91), center(0.5, 0.49, -0.1); 
+Point eye(.49, -0.39, -0.95), center(0.49, 0.5, 0.0); 
 GLfloat cor_luz[]		= { 1.0f, 1.0f, 1.0f, 1.0};
 GLfloat posicao_luz[]   = { maxCoord.x/2, maxCoord.y/2, -1.0, 1.0};
 
@@ -605,9 +605,9 @@ void display(void)
 		glMatrixMode (GL_PROJECTION);
 		glLoadIdentity ();
 
-		gluPerspective(angleCam, (GLfloat) width/(GLfloat) height, 1.0, 1000.0);
+		gluPerspective(angleCam, (GLfloat) width/(GLfloat) height, 0.1, 100.0);
 		gluLookAt (eye.x, eye.y, eye.z, center.x, center.y, center.z, 0.0, -1.0, 0.0);
-		gluLookAt(100.0, 0.0, 230.0, 100.0, 0.0, 60.0, 0.0, 1.0, 0.0);
+		//gluLookAt(100.0, 0.0, 230.0, 100.0, 0.0, 60.0, 0.0, 1.0, 0.0);
 		
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity ();

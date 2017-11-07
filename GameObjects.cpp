@@ -18,7 +18,6 @@ Object::Object(){}
 void Object::load3DModel(const char* file){
 	model_3d.readFromFile(file);
 	model_3d.unitize();
-	model_3d.setCoordinatesLimits(minCoordi, maxCoordi);
 	model_3d.computeNormals();
 }
 
