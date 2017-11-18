@@ -21,10 +21,10 @@ string playerName;
 Button startGame, scoreScreen, back;
 float Dt;
 bool endLevel, fullscreen = false, endGame = false, scoreSaved = false, paused = false, isOrtho = true;
-float angleCam = 30;
+float angleCam = 5;
 Point minCoord(0.0f, 0.0f, -100.0f), maxCoord(1.0f, 1.0f, 100.0f);
 //Point eye(0.5, -0.11, -0.91), center(0.5, 0.49, -0.1); 
-Point eye(.49, -0.39, -0.95), center(0.49, 0.5, 0.0); 
+Point eye(-0.299, 0.27, -9.67), center(0.54, 0.5, 0.645); 
 GLfloat cor_luz[]		= { 1.0f, 1.0f, 1.0f, 1.0};
 GLfloat posicao_luz[]   = { maxCoord.x/2, maxCoord.y/2, -1.0, 1.0};
 
@@ -571,15 +571,52 @@ void drawSquade()
     glEnable(GL_LIGHTING);
 }
 
+void drawGrid(){
+	float i;
+	
+	for(i = 0; i < 1; i += 0.1){
+		glBegin(GL_LINE_LOOP);
+			glVertex3f(i, 0, 0);
+			glVertex3f(i, 1, 0.5);
+		glEnd();
+	}
+	
+	for(i = 0; i < 1; i += 0.1){
+		glBegin(GL_LINE_LOOP);
+			glVertex3f(0, i, 0);
+			glVertex3f(1, i, 0.5);
+		glEnd();
+	}
+}
+
 //desenha o terreno
-/*void drawTerrain(){
+void drawTerrain(){
+	int rows = 4, columns = 4;
+	/*float vertices[4][4];
+	
+	// Set up vertices
+    for (int r = 0; r < rows; ++r) {
+        for (int c = 0; c < columns; ++c) {
+            int index = r*columns + c;
+            vertices[3*index + 0] = (float) c/4;
+            vertices[3*index + 1] = (float) r/4;
+            vertices[3*index + 2] = 0.0f;
+        }
+    }*/
+    
 	glPushMatrix();
 		setMaterial();
 		glColor3f(1.0f, 1.0f, 0.0f);
 		glTranslatef(.5f,0.5f, 0.0f);
-		terrain.draw(FLAT_SURFACE);
+		glBegin(GL_TRIANGLE_STRIP);
+			for (int r = 0; r < rows; ++r) {
+        		for (int c = 0; c < columns; ++c) {
+					glVertex3f((float)c/4, (float)r/4, 0.0f);
+				}
+			}
+		glEnd();
 	glPopMatrix();
-}*/
+}
 
 void display(void)
 {
@@ -593,7 +630,7 @@ void display(void)
 	glLoadIdentity ();
 	
 	glOrtho(minCoord.x, maxCoord.x, maxCoord.y, minCoord.y, minCoord.z, maxCoord.z);
-	gluLookAt (0.0, 0.2, 80.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+	gluLookAt (0.0, 0.0, 80.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 	
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity ();
@@ -627,9 +664,9 @@ void display(void)
 			break;
 		case 1:{
 			setMaterial();
-
-			terrain.draw();
-			
+			drawTerrain();
+//			terrain.draw();
+			drawGrid();
 			for(i = 0; i < nbatteries; i++){
 				batteries[i].draw();
 			}
