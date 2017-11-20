@@ -21,10 +21,9 @@ string playerName;
 Button startGame, scoreScreen, back;
 float Dt;
 bool endLevel, fullscreen = false, endGame = false, scoreSaved = false, paused = false, isOrtho = true;
-float angleCam = 5;
+float angleCam = 0.0f;
 Point minCoord(0.0f, 0.0f, -100.0f), maxCoord(1.0f, 1.0f, 100.0f);
-//Point eye(0.5, -0.11, -0.91), center(0.5, 0.49, -0.1); 
-Point eye(-0.299, 0.27, -9.67), center(0.54, 0.5, 0.645); 
+Point eye(0.56, 0.4, -0.41), center(.56, 0.4, 5.74504); 
 GLfloat cor_luz[]		= { 1.0f, 1.0f, 1.0f, 1.0};
 GLfloat posicao_luz[]   = { maxCoord.x/2, maxCoord.y/2, -1.0, 1.0};
 
@@ -152,7 +151,7 @@ void init_batteries(){
 		batteries[i].setVelocities(Point(v, v, 0));
 		batteries[i].updatePosition(Point(x, y, 0));
 		batteries[i].init();
-		batteries[i].load3DModel("cube.ply");
+		batteries[i].load3DModel("Models/cube.ply");
 		batteries[i].setColor(r,g,b);
 		batteries[i].setScale(0.05, 0.05, 0.05);
 	}
@@ -174,7 +173,7 @@ void init_cities(){
 		cities[i].updatePosition(Point(x, y, 0));
 	}
 	for(i = 0; i < n; i++){
-		cities[i].load3DModel("cube.ply");
+		cities[i].load3DModel("Models/cube.ply");
 		cities[i].setColor(0, 0 , 1);
 		cities[i].setScale(.05, .05, .05);
 	}
@@ -276,14 +275,14 @@ void init(void)
 	glEnable(GL_LIGHT0);                   // habilita luz 0
 	glEnable(GL_NORMALIZE);
 	glEnable(GL_COLOR_MATERIAL);
-	//glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	
 	glLightfv(GL_LIGHT0, GL_POSITION, posicao_luz);
 	
 	SIDEX = convert_range(0, width, minCoord.x, maxCoord.x, SIDEX);
 	SIDEY = convert_range(0, height, minCoord.y, maxCoord.y, SIDEY);
 	
-	terrain.load3DModel("terrain.ply");
+	terrain.load3DModel("Models/terrain.ply");
 	terrain.updatePosition(Point(0.5, .7, 0));
 	terrain.setScale(0.05, 0.05, 0.05);
 	terrain.setColor(.5, .5, 0);
@@ -629,26 +628,19 @@ void display(void)
 	glMatrixMode (GL_PROJECTION);
 	glLoadIdentity ();
 	
-	glOrtho(minCoord.x, maxCoord.x, maxCoord.y, minCoord.y, minCoord.z, maxCoord.z);
-	gluLookAt (0.0, 0.0, 80.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-	
+	if(!isOrtho){ 
+		gluPerspective(angleCam, (GLfloat) width/(GLfloat) height, 0.1, 100.0);
+		glScalef(2,2, 1);
+		glTranslatef(.06, .1, 0);
+		gluLookAt (eye.x, eye.y, eye.z, center.x, center.y, center.z, 0.0, -1.0, 0.0);
+	}else{
+		glOrtho(minCoord.x, maxCoord.x, maxCoord.y, minCoord.y, minCoord.z, maxCoord.z);
+		gluLookAt (0.0, 0.0, 80.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+	}
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity ();
 	
 	drawSquade();
-		 
-	if(!isOrtho){ 
-		glLoadIdentity ();
-		glMatrixMode (GL_PROJECTION);
-		glLoadIdentity ();
-
-		gluPerspective(angleCam, (GLfloat) width/(GLfloat) height, 0.1, 100.0);
-		gluLookAt (eye.x, eye.y, eye.z, center.x, center.y, center.z, 0.0, -1.0, 0.0);
-		//gluLookAt(100.0, 0.0, 230.0, 100.0, 0.0, 60.0, 0.0, 1.0, 0.0);
-		
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity ();
-	}
 
 	switch(menu){
 		case 0:
@@ -657,16 +649,15 @@ void display(void)
 			glOrtho(minCoord.x, maxCoord.x, maxCoord.y, minCoord.y, minCoord.z, maxCoord.z);
 			gluLookAt (0.0, 0.0, 80.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 			
-			drawSquade();		
 			startGame.draw();
 			scoreScreen.draw();
 			
 			break;
 		case 1:{
 			setMaterial();
-			drawTerrain();
-//			terrain.draw();
+			terrain.draw();
 			drawGrid();
+			
 			for(i = 0; i < nbatteries; i++){
 				batteries[i].draw();
 			}
@@ -897,10 +888,13 @@ void keyboard (unsigned char key, int x, int y)
 			center.z += .01;
 			break;
 		case '7':
-			angleCam += 1;
+			angleCam += .01;
 			break;
 		case '1':
-			angleCam -= 1;
+			angleCam -= .1;
+			/*if(angleCam < 1E-4 && angleCam > -1E-4){
+				angleCam = 0;
+			}*/
 			break;
 		case '5':
 			cout << eye << " " << center << " " << angleCam << endl;
