@@ -76,10 +76,13 @@ bool Object::isDone(){
 
 void Terrain::draw(){
 	glPushMatrix();
+		glFrontFace(GL_CW);
 		glColor3f(color[0], color[1], color[2]);
-		glTranslatef(pos.x, pos.y, pos.z);
+		glTranslatef(pos.x, pos.y+0.12, pos.z-0.5);
+		glRotatef(-180, 0, 1, 0);
+		glRotatef(90, 1, 0, 0);
 		glScalef(scale[0], scale[1], scale[2]);
-		
+
 		model_3d.draw(FLAT_SURFACE);
 	glPopMatrix();
 }
@@ -106,8 +109,8 @@ void Missile::update(float dt){
 	if(!done){
 		pos.x += vel.x * dt * tx;
 		pos.y += vel.y * dt * ty;
-		
-		if(pos.distance(goal_pos) <= 0.001){
+
+		if(pos.distance(goal_pos) <= 0.01){
 			fired = false;
 			exploded = true;
 		}
@@ -151,19 +154,19 @@ void Missile::draw(){
 	if(fired){
 		glDisable(GL_LIGHTING);
 		glColor4f(color[0], color[1], color[2], 0.0);
-		
+
 		glBegin(GL_LINES);
 			glVertex3f(from.x, from.y, 0.0f);
 			glVertex3f(pos.x, pos.y, 0.0f);
 		glEnd();
 		glEnable(GL_LIGHTING);
-		
+
 		glColor4f(Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0), 0.0);
 
 		glPushMatrix();
 			glTranslatef(pos.x, pos.y, pos.z);
 			glutSolidSphere(0.004, 30, 30);
-		glPopMatrix(); 
+		glPopMatrix();
 	}else if(!fired && (!exploded && !done)){
 		glDisable(GL_LIGHTING);
 		glColor4f(color[0], color[1], color[2], 0.0);
@@ -214,7 +217,7 @@ void Battery::reload(){
 
 	missiles.clear();
 	missiles.resize(10);
-	
+
 	init();
 }
 
@@ -254,10 +257,10 @@ void Battery::draw(){
 			glColor3f(color[0], color[1], color[2]);
 			glTranslatef(pos.x, pos.y, pos.z);
 			glScalef(scale[0], scale[1], scale[2]);
-		
+
 			model_3d.draw(FLAT_SURFACE);
 		glPopMatrix();
-	}	
+	}
 }
 
 /***********************************************
@@ -273,7 +276,7 @@ void City::draw(){
 		glColor3f(color[0], color[1], color[2]);
 		glTranslatef(pos.x, pos.y, pos.z);
 		glScalef(scale[0], scale[1], scale[2]);
-		
+
 		model_3d.draw(FLAT_SURFACE);
 	glPopMatrix();
 }
@@ -351,13 +354,13 @@ void Button::update(float dt){
 void Button::draw(){
 	glDisable(GL_LIGHTING);
 	glColor3f(color[0], color[1], color[2]);
-	
-	glBegin(GL_POLYGON);		
+
+	glBegin(GL_POLYGON);
 		glVertex3f(pos.x + size.x, pos.y - size.y, 0);
 		glVertex3f(pos.x - size.x, pos.y - size.y, 0);
 		glVertex3f(pos.x - size.x, pos.y + size.y, 0);
 		glVertex3f(pos.x + size.x, pos.y + size.y, 0);
-	
+
 	glEnd();
 
    	Drawing::drawText(pos.x - size.x/2, pos.y + size.y/3, 0, 0, 0, 1, text.c_str());
