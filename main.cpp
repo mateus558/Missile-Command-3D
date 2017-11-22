@@ -179,6 +179,7 @@ void init_cities(){
 		cities[i].setColor(1, 1, 1);
 		cities[i].setScale(.03, .03, .03);
 	}
+	
 }
 
 //Inicializa todos mísseis inimigos da fase
@@ -666,6 +667,8 @@ void display(void)
 		case 1:{
 			setMaterial();
 			glRotatef(-5, 1, 0, 0);
+			glTranslatef(0.0f,0.08f, 0.0f);
+			
 			
 			textureManager->Bind(2);
 			terrain.draw();
@@ -699,7 +702,7 @@ void display(void)
 				(*itr).draw();
 			}
 			glRotatef(5, 1, 0, 0);
-
+			//glTranslatef(0.0f,-0.08f, 0.0f);
 			glMatrixMode (GL_PROJECTION);
 			glLoadIdentity ();
 			glOrtho(minCoord.x, maxCoord.x, maxCoord.y, minCoord.y, minCoord.z, maxCoord.z);
