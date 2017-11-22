@@ -79,7 +79,7 @@ void Terrain::draw(){
 		glFrontFace(GL_CW);
 		glColor3f(color[0], color[1], color[2]);
 		glTranslatef(pos.x, pos.y+0.12, pos.z-0.5);
-		glRotatef(-180, 0, 1, 0);
+		glRotatef(360, 0, 1, 0);
 		glRotatef(90, 1, 0, 0);
 		glScalef(scale[0], scale[1], scale[2]);
 
@@ -257,7 +257,9 @@ void Battery::draw(){
 			glColor3f(color[0], color[1], color[2]);
 			glTranslatef(pos.x, pos.y, pos.z);
 			glScalef(scale[0], scale[1], scale[2]);
-
+			glRotatef(180, 1, 0, 0);
+			glRotatef(-90, 0, 1, 0);
+			
 			model_3d.draw(FLAT_SURFACE);
 		glPopMatrix();
 	}
@@ -276,7 +278,8 @@ void City::draw(){
 		glColor3f(color[0], color[1], color[2]);
 		glTranslatef(pos.x, pos.y, pos.z);
 		glScalef(scale[0], scale[1], scale[2]);
-
+		glRotatef(180, 1, 0, 0);
+		glRotatef(90, 0, 1, 0);
 		model_3d.draw(FLAT_SURFACE);
 	glPopMatrix();
 }

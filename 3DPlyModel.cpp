@@ -12,6 +12,14 @@ float convertRange(float amin, float amax, float bmin, float bmax, float input){
 	return bmin + ((bmax - bmin) / (amax - amin)) * (input - amin);
 }
 
+void PlyModel::setMaterial(GLfloat *ambient, GLfloat *diffuse, GLfloat *specular, GLfloat *shininess){
+	mat.ambient = ambient;
+	mat.diffuse = diffuse;
+	mat.specular = specular;
+	mat.shininess = shininess;
+	mat.hasMaterial = true;
+}
+
 void PlyModel::findMinMaxLimits(){
 	int i, n = points.size();
 	
@@ -101,6 +109,10 @@ void PlyModel::readFromFile(const char* fileName){
 				hasNormals = true;
 				normals.resize(np);
 			}
+			if(*(itr) == string("s")){
+				hasTexture = true;
+				uv_coordinates.resize(np);
+			}
 		}
 		items.clear();
 	}
@@ -118,6 +130,9 @@ void PlyModel::readFromFile(const char* fileName){
 			normals[i] = Point(stod(items[3]), stod(items[4]), stod(items[5]));
 		}
 		
+		if(hasTexture){
+			uv_coordinates[i] = UV(stod(items[6]), stod(items[7]));
+		}
 		items.clear();
 	}
 	
@@ -195,6 +210,7 @@ void PlyModel::scale(float scaleFactor){
 
 void PlyModel::computeNormals(){
 	int i, nf = faces.size();
+	float norm = 0;
 	Point vec, vec1;
 			
 	if(!hasNormals && !normalComputed){
@@ -212,6 +228,9 @@ void PlyModel::computeNormals(){
 			normals[i] = Point(vec.y * vec1.z - vec.z * vec1.y,
 							   vec.z * vec1.x - vec.x * vec1.z,
 							   vec.x * vec1.y - vec.y * vec1.x);
+			
+			norm = normals[i].norm();
+			normals[i] = Point(normals[i].x/norm, normals[i].y/norm, normals[i].z/norm);
 		}
 		
 		normalComputed = true;
@@ -220,6 +239,13 @@ void PlyModel::computeNormals(){
 
 void PlyModel::draw(DrawMode t){
 	int i, j, nf = faces.size(), np = points.size(), ns;
+	
+	if(mat.hasMaterial){
+		glMaterialfv(GL_FRONT, GL_AMBIENT, mat.ambient);
+		glMaterialfv(GL_FRONT, GL_DIFFUSE, mat.diffuse);
+		glMaterialfv(GL_FRONT, GL_SPECULAR, mat.specular);
+		glMaterialfv(GL_FRONT, GL_SHININESS, mat.shininess);
+	}
 	
 	switch(t){
 		case WIREFRAME:
@@ -235,16 +261,23 @@ void PlyModel::draw(DrawMode t){
 		case FLAT_SURFACE:
 			//glColor3f(0,.3,0);
 			for(i = 0; i < nf; i++){
-				glBegin(GL_TRIANGLE_FAN);
-					for(j = 0; j < facePoints; j++){
-						if(!hasNormals && normalComputed){
-							glNormal3f(normals[i].x, normals[i].y, normals[i].z);
-						}else if(hasNormals){	
-							glNormal3f(normals[faces[i][j]].x, normals[faces[i][j]].y, normals[faces[i][j]].z);
-						}
-						glVertex3f(points[faces[i][j]].x, points[faces[i][j]].y, points[faces[i][j]].z);
-						//cout << points[faces[i][j]] << endl;
+				if(facePoints == 3)	
+					glBegin(GL_TRIANGLE_FAN);
+				else 
+					glBegin(GL_QUADS);
+				
+				for(j = 0; j < facePoints; j++){
+					if(!hasNormals && normalComputed){
+						glNormal3f(normals[i].x, normals[i].y, normals[i].z);
+					}else if(hasNormals){	
+						glNormal3f(normals[faces[i][j]].x, normals[faces[i][j]].y, normals[faces[i][j]].z);
 					}
+					if(hasTexture){
+						glTexCoord2f(uv_coordinates[faces[i][j]].u, uv_coordinates[faces[i][j]].v);
+					}
+					glVertex3f(points[faces[i][j]].x, points[faces[i][j]].y, points[faces[i][j]].z);
+					//cout << points[faces[i][j]] << endl;
+				}
 				glEnd();
 			}
 			break;

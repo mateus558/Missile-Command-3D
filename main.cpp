@@ -9,6 +9,7 @@
 #include "Random.h"
 #include "utils.h"
 #include "3DPlyModel.h"
+#include "glcTexture.h"
 
 using namespace std;
 
@@ -16,7 +17,7 @@ int width = 1080, height = 760, level = 1, launchedEnemies = 0, nMissilesRain = 
 int score = 0, score1 = 7500, citiesExplodedItr = 0, enemyExplodedItr = 0, enemyExplodedNum = 0, batteriesExplodedItr = 0;
 int menu = 0, citiesExplodedNum = 0;
 int nMissiles = 10;
-int distOrigem = 100;
+int distOrigem = 80;
 string playerName;
 Button startGame, scoreScreen, back;
 float Dt;
@@ -25,8 +26,9 @@ float angleCam = 0.0f;
 Point minCoord(0.0f, 0.0f, -100.0f), maxCoord(1.0f, 1.0f, 100.0f);
 Point eye(0.56, 0.4, -0.41), center(.56, 0.4, .74504);
 GLfloat cor_luz[]		= { 1.0f, 1.0f, 1.0f, 1.0};
-GLfloat posicao_luz[]   = { maxCoord.x/2, maxCoord.y/2, -1.0, 1.0};
+GLfloat posicao_luz[]   = { maxCoord.x/3, maxCoord.y/3, 1.0, 1.0};
 
+glcTexture *textureManager;
 Terrain terrain;
 vector<Battery> batteries(3);
 vector<City> cities(6);
@@ -89,10 +91,10 @@ int main(int argc, char** argv){
 
 void setMaterial(void)
 {
-	GLfloat objeto_ambient[]   = { 0.25, 0.7, 0.25, 1.0 };
-	GLfloat objeto_difusa[]    = { .2, 0.4, 0.2, 1.0 };
-	GLfloat objeto_especular[] = { 0.774597, 0.774597, 0.774597, 1.0 };
-	GLfloat objeto_brilho[]    = { 90.0 };
+	GLfloat objeto_ambient[]   = { 0.19225, 0.19225, 0.19225, 1.0 };
+	GLfloat objeto_difusa[]    = { 0.50754, 0.50754, 0.50754, 1.0 };
+	GLfloat objeto_especular[] = { 0.508273, 0.508273, 0.508273, 1.0 };
+	GLfloat objeto_brilho[]    = { 0.4 * 128.0};
 
 	// Define os parametros da superficie a ser iluminada
 	glMaterialfv(GL_FRONT, GL_AMBIENT, objeto_ambient);
@@ -151,8 +153,8 @@ void init_batteries(){
 		batteries[i].setVelocities(Point(v, v, 0));
 		batteries[i].updatePosition(Point(x, y, 0));
 		batteries[i].init();
-		batteries[i].load3DModel("Models/cube.ply");
-		batteries[i].setColor(r,g,b);
+		batteries[i].load3DModel("Models/PAC3.ply");
+		batteries[i].setColor(1, 1, 1);
 		batteries[i].setScale(0.05, 0.05, 0.05);
 	}
 }
@@ -173,9 +175,9 @@ void init_cities(){
 		cities[i].updatePosition(Point(x, y, 0));
 	}
 	for(i = 0; i < n; i++){
-		cities[i].load3DModel("Models/cube.ply");
-		cities[i].setColor(0, 0 , 1);
-		cities[i].setScale(.05, .05, .05);
+		cities[i].load3DModel("Models/city.ply");
+		cities[i].setColor(1, 1, 1);
+		cities[i].setScale(.03, .03, .03);
 	}
 }
 
@@ -266,7 +268,7 @@ void init_scores(){
 
 void init(void)
 {
-	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glClearColor(0.0, 1.0, 0.0, 0.0);
 	glShadeModel(GL_SMOOTH);
 
 	glEnable(GL_DEPTH_TEST);               // Habilita Z-buffer
@@ -281,6 +283,14 @@ void init(void)
 
 	SIDEX = convert_range(0, width, minCoord.x, maxCoord.x, SIDEX);
 	SIDEY = convert_range(0, height, minCoord.y, maxCoord.y, SIDEY);
+
+	textureManager = new glcTexture();
+	textureManager->SetNumberOfTextures(3);
+	textureManager->SetWrappingMode(GL_REPEAT);
+	
+	textureManager->CreateTexture("Textures/PAC.png", 0);
+	textureManager->CreateTexture("Textures/city.png", 1);
+	textureManager->CreateTexture("Textures/terrain.png", 2);
 
 	terrain.load3DModel("Models/terrain.ply");
 	terrain.updatePosition(Point(0.5, .7, 0));
@@ -635,7 +645,7 @@ void display(void)
 		gluLookAt (eye.x, eye.y, eye.z, center.x, center.y, center.z, 0.0, -1.0, 0.0);
 	}else{
 		glOrtho(minCoord.x, maxCoord.x, maxCoord.y, minCoord.y, minCoord.z, maxCoord.z);
-		gluLookAt (0.0, 0.0, 80.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+		gluLookAt (0.0, 0.0, distOrigem, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 	}
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity ();
@@ -656,20 +666,24 @@ void display(void)
 		case 1:{
 			setMaterial();
 			glRotatef(-5, 1, 0, 0);
+			
+			textureManager->Bind(2);
 			terrain.draw();
-			//drawGrid();
 
+			textureManager->Bind(0);
 			for(i = 0; i < nbatteries; i++){
 				batteries[i].draw();
 			}
 
-
+			textureManager->Bind(1);
 			for(i = 0; i < ncities; i++){
 				if(!cities[i].isDone()){
 					cities[i].draw();
 				}
 			}
-
+			
+		    textureManager->Disable();			
+			
 			for(i = 0; i < nmissiles; i++){
 				firedMissiles[i].draw();
 				firedMissiles[i].drawTarget(SIDEX, SIDEY);
@@ -866,10 +880,10 @@ void keyboard (unsigned char key, int x, int y)
 			eye.x += .01;
 			break;
 		case 'q':
-			eye.z -= .01;
+			eye.z -= .1f;
 			break;
 		case 'e':
-			eye.z += .01;
+			eye.z += .1f;
 			break;
 		case '8':
 			center.y += .01;
