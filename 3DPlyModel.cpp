@@ -259,7 +259,6 @@ void PlyModel::draw(DrawMode t){
 			}
 			break;
 		case FLAT_SURFACE:
-			//glColor3f(0,.3,0);
 			for(i = 0; i < nf; i++){
 				if(facePoints == 3)	
 					glBegin(GL_TRIANGLE_FAN);
@@ -276,7 +275,6 @@ void PlyModel::draw(DrawMode t){
 						glTexCoord2f(uv_coordinates[faces[i][j]].u, uv_coordinates[faces[i][j]].v);
 					}
 					glVertex3f(points[faces[i][j]].x, points[faces[i][j]].y, points[faces[i][j]].z);
-					//cout << points[faces[i][j]] << endl;
 				}
 				glEnd();
 			}

@@ -4,9 +4,9 @@
 using namespace std;
 
 namespace Drawing{
-	void drawText(float x, float y, float r, float g, float b, int font, const char *string){
+	void drawText(float x, float y, float z, float r, float g, float b, int font, const char *string){
 		glColor3f( r, g, b );
-		glRasterPos3f(x, y, 10);
+		glRasterPos3f(x, y, z);
 		int len, i;
 		len = (int)strlen(string);
 

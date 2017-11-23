@@ -366,7 +366,7 @@ void Button::draw(){
 
 	glEnd();
 
-   	Drawing::drawText(pos.x - size.x/2, pos.y + size.y/3, 0, 0, 0, 1, text.c_str());
+   	Drawing::drawText(pos.x - size.x/2, pos.y + size.y/3, 10, 0, 0, 0, 1, text.c_str());
 	glEnable(GL_LIGHTING);
 }
 
@@ -384,8 +384,8 @@ void Score::setScore(int score){
 
 void Score::draw(){
 	glDisable(GL_LIGHTING);
-	Drawing::drawText(pos.x, pos.y, 1, 0, 0, 1, text.c_str());
-	Drawing::drawText(pos.x + .1, pos.y, 1, 0, 0, 1, to_string(score).c_str());
+	Drawing::drawText(pos.x, pos.y, 1, 10, 0, 0, 1, text.c_str());
+	Drawing::drawText(pos.x + .1, pos.y, 10, 1, 0, 0, 1, to_string(score).c_str());
 	glEnable(GL_LIGHTING);
 }
 

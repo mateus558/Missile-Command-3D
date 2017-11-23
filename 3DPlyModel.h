@@ -37,6 +37,10 @@ public:
 	void unitize();
 	void setCoordinatesLimits(Point cmin, Point cmax);
 	int getTrianglesNumber();
+	std::vector<Point> getPoints() {return points;}
+	std::vector<Point> getNormals() {return normals;}
+	std::vector<UV> getUVCoords() {return uv_coordinates;} 
+	std::vector<std::vector<int> > getFaces(){return faces;}
 	
 private:
 	bool hasNormals = false, normalComputed = false, normalized = false, minMaxAxisComputed = false, hasTexture = false;

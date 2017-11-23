@@ -52,6 +52,9 @@ void glcTexture::SetWrappingMode(int mode)
 		case GL_CLAMP:
 			this->wrapMode = GL_CLAMP;
 		break;
+		case GL_CLAMP_TO_EDGE:
+			this->wrapMode = GL_CLAMP_TO_EDGE;
+		break;
 		case GL_REPEAT:
 			this->wrapMode = GL_REPEAT;
 		break;

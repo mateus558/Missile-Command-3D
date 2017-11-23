@@ -2,7 +2,10 @@
 #include <algorithm>
 #include <vector>
 #include <fstream>
+#include <GL/glew.h>
 #include <GL/glut.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
 #include <cstring>
 
 #include "GameObjects.h"
@@ -10,6 +13,7 @@
 #include "utils.h"
 #include "3DPlyModel.h"
 #include "glcTexture.h"
+#include "skybox.h"
 
 using namespace std;
 
@@ -29,6 +33,9 @@ GLfloat cor_luz[]		= { 1.0f, 1.0f, 1.0f, 1.0};
 GLfloat posicao_luz[]   = { maxCoord.x/3, maxCoord.y/3, 1.0, 1.0};
 
 glcTexture *textureManager;
+
+GLuint tex_skybox;
+SkyBox skybox("Models/skybox.ply");
 Terrain terrain;
 vector<Battery> batteries(3);
 vector<City> cities(6);
@@ -293,6 +300,10 @@ void init(void)
 	textureManager->CreateTexture("Textures/city.png", 1);
 	textureManager->CreateTexture("Textures/terrain.png", 2);
 
+	//skybox.load_skybox("Textures/SkyBox/skybox_texture.png");
+	//skybox.load_skybox("Textures/Skybox/front.png", "Textures/Skybox/back.png", "Textures/Skybox/top.png", "Textures/Skybox/bottom.png", "Textures/Skybox/left.png", "Textures/Skybox/right.png");
+	skybox.load_skybox("Textures/Skybox/skybox_texture.png", "Textures/Skybox/skybox_texture.png", "Textures/Skybox/skybox_texture.png", "Textures/Skybox/skybox_texture.png", "Textures/Skybox/skybox_texture.png", "Textures/Skybox/skybox_texture.png");
+	
 	terrain.load3DModel("Models/terrain.ply");
 	terrain.updatePosition(Point(0.5, .7, 0));
 	terrain.setScale(0.5, 0.5, 0.5);
@@ -640,14 +651,20 @@ void display(void)
 	glLoadIdentity ();
 
 	if(!isOrtho){
-		gluPerspective(angleCam, (GLfloat) width/(GLfloat) height, 0.1, 100.0);
+		gluPerspective(angleCam, (GLfloat) width/(GLfloat) height, -100, 100.0);
+		//glScalef(.1,.1, .1);
 		glScalef(2,2, 1);
-		glTranslatef(.06, .1, 0);
+		glTranslatef(.06, .06, 0);
+		glRotatef(-5, 1, 0, 0);
+		
 		gluLookAt (eye.x, eye.y, eye.z, center.x, center.y, center.z, 0.0, -1.0, 0.0);
 	}else{
 		glOrtho(minCoord.x, maxCoord.x, maxCoord.y, minCoord.y, minCoord.z, maxCoord.z);
+
 		gluLookAt (0.0, 0.0, distOrigem, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 	}
+	
+	
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity ();
 
@@ -665,13 +682,12 @@ void display(void)
 
 			break;
 		case 1:{
-			setMaterial();
-			glRotatef(-5, 1, 0, 0);
-			glTranslatef(0.0f,0.08f, 0.0f);
-			
+			setMaterial();		
 			
 			textureManager->Bind(2);
 			terrain.draw();
+				
+			skybox.draw_skybox();
 
 			textureManager->Bind(0);
 			for(i = 0; i < nbatteries; i++){
@@ -689,9 +705,10 @@ void display(void)
 			
 			for(i = 0; i < nmissiles; i++){
 				firedMissiles[i].draw();
+				//glTranslatef(0.0f,-0.08f, 0.0f);
 				firedMissiles[i].drawTarget(SIDEX, SIDEY);
 			}
-
+			
 			for(i = 0; i < numEnemyMissiles; i++){
 				if(enemyLaunched[i] && !enemyMissiles[i].isDone()){
 					enemyMissiles[i].draw();
@@ -710,13 +727,13 @@ void display(void)
 			glDisable(GL_LIGHTING);
 
 			string levelTag = "Level " + to_string(level);
-			Drawing::drawText(maxCoord.x/3, .03, 1, 0, 0, 1, string(to_string(score)).c_str());
-			Drawing::drawText(2*maxCoord.x/3, .03, 1, 0, 0, 1, string(to_string(score1)).c_str());
-			Drawing::drawText(.005, .03, 0, 1, 0, 1, levelTag.c_str());
+			Drawing::drawText(maxCoord.x/3, .03, 0, 1, 0, 0, 1, string(to_string(score)).c_str());
+			Drawing::drawText(2*maxCoord.x/3, .03, 0, 1, 0, 0, 1, string(to_string(score1)).c_str());
+			Drawing::drawText(.005, .03, 0, 0, 1, 0, 1, levelTag.c_str());
 
 			if(endGame){
-				Drawing::drawText(maxCoord.x/2, maxCoord.y/2, 1, 0, 0, 1, "THE END");
-				Drawing::drawText(maxCoord.x/2, maxCoord.y/2 + .1, 0, 1, 0, 1, "Enter your name initials in the terminal.");
+				Drawing::drawText(maxCoord.x/2, maxCoord.y/2, 0, 1, 0, 0, 1, "THE END");
+				Drawing::drawText(maxCoord.x/2, maxCoord.y/2 + .1, 0, 0, 1, 0, 1, "Enter your name initials in the terminal.");
 			}
 			glEnable(GL_LIGHTING);
 			break;
@@ -731,7 +748,7 @@ void display(void)
 			n = (scores.size() > 10)?10:scores.size();
 			glDisable(GL_LIGHTING);
 
-			Drawing::drawText(maxCoord.x/2 - .07, .25, 0, 1, 0, 1, "SCORES");
+			Drawing::drawText(maxCoord.x/2 - .07, .25, 10, 0, 1, 0, 1, "SCORES");
 
 			for(auto itr = scores.begin(); itr != (scores.begin()+10); itr++){
 				(*itr).draw();
