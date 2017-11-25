@@ -110,7 +110,7 @@ void Missile::update(float dt){
 		pos.x += vel.x * dt * tx;
 		pos.y += vel.y * dt * ty;
 
-		if(pos.distance(goal_pos) <= 0.01){
+		if(pos.distance(goal_pos) <= 0.03){
 			fired = false;
 			exploded = true;
 		}
@@ -139,6 +139,7 @@ vector<Missile> Missile::divide(int level){
 void Missile::drawTarget(float sidex, float sidey){
 	if(!done){
 		glColor4f(Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0), 0.0);
+
 		glBegin(GL_LINES);
 			glVertex2f(goal_pos.x-sidex, goal_pos.y-sidey);
 		    glVertex2f(goal_pos.x+sidex, goal_pos.y+sidey);
@@ -291,12 +292,17 @@ void City::draw(){
 void Explosion::draw(){
 	Random::init();
 	glPushMatrix();
-		glColor3f(1.0, 0.0, 0.0);
-		//glColor3f(Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0));
-		glTranslatef(pos.x, pos.y, pos.z);
+		glEnable (GL_BLEND); 
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		glutSolidSphere(initRadius, 100, 100);
+		glColor4f(1.0, 1.0, 1.0, 1.0);
+		glTranslatef(pos.x, pos.y, pos.z);
+		
+		draw_circle(initRadius, 100);
+
+		glDisable(GL_BLEND);
 	glPopMatrix();
+	
 }
 
 bool Explosion::isColliding(Object obj){
@@ -312,7 +318,7 @@ void Explosion::update(float dt){
 	}
 
 	initRadius += signal * .05 * dt;
-
+	percent = initRadius/finalRadius;
 	if(initRadius <= 0 && signal == -1){
 		finished = true;
 		return ;

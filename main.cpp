@@ -4,6 +4,7 @@
 #include <fstream>
 #include <GL/glew.h>
 #include <GL/glut.h>
+#define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <cstring>
@@ -28,13 +29,17 @@ float Dt;
 bool endLevel, fullscreen = false, endGame = false, scoreSaved = false, paused = false, isOrtho = true;
 float angleCam = 0.0f;
 Point minCoord(0.0f, 0.0f, -100.0f), maxCoord(1.0f, 1.0f, 100.0f);
+Point camScale(2, 2, 1);
 Point eye(0.56, 0.4, -0.41), center(.56, 0.4, .74504);
 GLfloat cor_luz[]		= { 1.0f, 1.0f, 1.0f, 1.0};
 GLfloat posicao_luz[]   = { maxCoord.x/3, maxCoord.y/3, 1.0, 1.0};
 
+float map[16];
+float forwardz = 0.0, terrainz = -.5;
+Point skypos(0.869999, -0.64, -1.4);
+Point skyscale(.91, .76, -1.6);
+Point skyrot(0, 0, 0);
 glcTexture *textureManager;
-
-GLuint tex_skybox;
 SkyBox skybox("Models/skybox.ply");
 Terrain terrain;
 vector<Battery> batteries(3);
@@ -52,6 +57,16 @@ bool compare_score(Score a, Score b){
 	return a.score < b.score;
 }
 
+bool sort_explosion_tex(string a, string b){
+	int i1 = a.find(string(".")), i2 = b.find(string("."));
+	string c = a, d = b;
+	
+	c.erase(i1, c.size());
+	d.erase(i2, d.size());
+	
+	return stoi(c) < stoi(d);
+}
+
 float convert_range(float amin, float amax, float bmin, float bmax, float input);
 void restart_game();
 void init_batteries();
@@ -60,7 +75,6 @@ void init_enemies();
 void init_game();
 void init_scores();
 void init();
-void drawTerrain();
 void output(int x, int y, float r, float g, float b, int font, const char *string);
 void saveScore();
 void readScores();
@@ -195,7 +209,7 @@ void init_enemies(){
 	float r = Random::floatInRange(0, 1), g = Random::floatInRange(0, 1), b = Random::floatInRange(0, 1);
 
 	for(i = 0; i < n; i++){
-		Point p = Point(Random::floatInRange(0, maxCoord.x), -.01, 0);
+		Point p = Point(Random::floatInRange(0, maxCoord.x), -.1, 0);
 
 		enemyMissiles[i].setColor(r, g, b);
 		enemyMissiles[i].updatePosition(p);
@@ -276,6 +290,18 @@ void init_scores(){
 
 void init(void)
 {
+	float c = 0.0;
+	int i;
+	vector<string> exp_tex;
+	string path("Textures/Explosion/");
+	
+	GLenum err = glewInit();
+	if (GLEW_OK != err)
+	{
+		cerr << "failed to initialize GLEW!" << endl;
+	}
+	std::cout << "Using GLEW Version: " << glewGetString(GLEW_VERSION) << std::endl;
+	
 	glClearColor(0.0, 1.0, 0.0, 0.0);
 	glShadeModel(GL_SMOOTH);
 
@@ -293,21 +319,29 @@ void init(void)
 	SIDEY = convert_range(0, height, minCoord.y, maxCoord.y, SIDEY);
 
 	textureManager = new glcTexture();
-	textureManager->SetNumberOfTextures(3);
+	textureManager->SetNumberOfTextures(20);
 	textureManager->SetWrappingMode(GL_REPEAT);
-	
 	textureManager->CreateTexture("Textures/PAC.png", 0);
 	textureManager->CreateTexture("Textures/city.png", 1);
 	textureManager->CreateTexture("Textures/terrain.png", 2);
+	textureManager->CreateTexture("Textures/exp2_1.png", 3);
+	
+	exp_tex = list_datasets(false);
+	sort(exp_tex.begin(), exp_tex.end(), sort_explosion_tex);
+	for(i = 4; i < 20; i++, c += 6.25){
+		textureManager->CreateTexture(string(path + exp_tex[i-4]).c_str(), i);
+		map[i-4] = c;
+	}
 
-	//skybox.load_skybox("Textures/SkyBox/skybox_texture.png");
-	//skybox.load_skybox("Textures/Skybox/front.png", "Textures/Skybox/back.png", "Textures/Skybox/top.png", "Textures/Skybox/bottom.png", "Textures/Skybox/left.png", "Textures/Skybox/right.png");
-	skybox.load_skybox("Textures/Skybox/skybox_texture.png", "Textures/Skybox/skybox_texture.png", "Textures/Skybox/skybox_texture.png", "Textures/Skybox/skybox_texture.png", "Textures/Skybox/skybox_texture.png", "Textures/Skybox/skybox_texture.png");
+	skybox.load_skybox("Textures/Skybox/skybox_texture.png");
 	
 	terrain.load3DModel("Models/terrain.ply");
 	terrain.updatePosition(Point(0.5, .7, 0));
 	terrain.setScale(0.5, 0.5, 0.5);
 	terrain.setColor(.5, .5, 0);
+	
+	skybox.center_of(&terrain);
+	skybox.center_of(eye);
 
 	switch(menu){
 		case 0:
@@ -530,6 +564,8 @@ void idle()
 			 	enemyExplodedNum = 0;
 				nMissilesRain = 0;
 				endLevel = true;
+				
+				
 			}
 
 			break;
@@ -581,15 +617,21 @@ void readScores(){
 //desenha o cursor
 void drawSquade()
 {
-	glDisable(GL_LIGHTING);
-    glColor3f(0.0, 0.0, 1.0);
-    glBegin(GL_LINES);
-    	glVertex3f(MOUSEx, (MOUSEy-SIDEY), 0);
-        glVertex3f(MOUSEx, (MOUSEy+SIDEY), 0);
-        glVertex3f((MOUSEx-SIDEX), MOUSEy, 0);
-        glVertex3f((MOUSEx+SIDEX), MOUSEy, 0);
-    glEnd();
-    glEnable(GL_LIGHTING);
+//	glPushMatrix();
+//	glLoadIdentity();
+		glDisable(GL_LIGHTING);
+		glDisable(GL_TEXTURE_2D);
+
+		glColor4f(0.0, 0.0, 1.0, 1.0);		
+		glBegin(GL_LINES);
+			glVertex3f(MOUSEx, (MOUSEy-SIDEY), .5);
+		    glVertex3f(MOUSEx, (MOUSEy+SIDEY), .5);
+		    glVertex3f((MOUSEx-SIDEX), MOUSEy, .5);
+		    glVertex3f((MOUSEx+SIDEX), MOUSEy, .5);
+		glEnd();
+		glEnable(GL_LIGHTING);
+  // 	glPopAttrib();
+ //   glPopMatrix();
 }
 
 void drawGrid(){
@@ -610,35 +652,6 @@ void drawGrid(){
 	}
 }
 
-//desenha o terreno
-void drawTerrain(){
-	int rows = 4, columns = 4;
-	/*float vertices[4][4];
-
-	// Set up vertices
-    for (int r = 0; r < rows; ++r) {
-        for (int c = 0; c < columns; ++c) {
-            int index = r*columns + c;
-            vertices[3*index + 0] = (float) c/4;
-            vertices[3*index + 1] = (float) r/4;
-            vertices[3*index + 2] = 0.0f;
-        }
-    }*/
-
-	glPushMatrix();
-		setMaterial();
-		glColor3f(1.0f, 1.0f, 0.0f);
-		glTranslatef(.5f,0.5f, 0.0f);
-		glBegin(GL_TRIANGLE_STRIP);
-			for (int r = 0; r < rows; ++r) {
-        		for (int c = 0; c < columns; ++c) {
-					glVertex3f((float)c/4, (float)r/4, 0.0f);
-				}
-			}
-		glEnd();
-	glPopMatrix();
-}
-
 void display(void)
 {
 	int i, ncities = cities.size(), nbatteries = batteries.size(), nmissiles = firedMissiles.size();
@@ -647,48 +660,50 @@ void display(void)
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
 
-	glMatrixMode (GL_PROJECTION);
-	glLoadIdentity ();
-
-	if(!isOrtho){
-		gluPerspective(angleCam, (GLfloat) width/(GLfloat) height, -100, 100.0);
-		//glScalef(.1,.1, .1);
-		glScalef(2,2, 1);
-		glTranslatef(.06, .06, 0);
-		glRotatef(-5, 1, 0, 0);
-		
-		gluLookAt (eye.x, eye.y, eye.z, center.x, center.y, center.z, 0.0, -1.0, 0.0);
-	}else{
-		glOrtho(minCoord.x, maxCoord.x, maxCoord.y, minCoord.y, minCoord.z, maxCoord.z);
-
-		gluLookAt (0.0, 0.0, distOrigem, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-	}
-	
-	
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity ();
-
-	drawSquade();
-
 	switch(menu){
-		case 0:
+		case 0:{
 			glMatrixMode (GL_PROJECTION);
 			glLoadIdentity ();
 			glOrtho(minCoord.x, maxCoord.x, maxCoord.y, minCoord.y, minCoord.z, maxCoord.z);
 			gluLookAt (0.0, 0.0, 80.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-
+			
+			glMatrixMode(GL_MODELVIEW);
+			glLoadIdentity ();
+			
+			drawSquade();
 			startGame.draw();
 			scoreScreen.draw();
 
 			break;
+		}
 		case 1:{
-			setMaterial();		
+			glMatrixMode (GL_PROJECTION);
+			glLoadIdentity ();
 			
-			textureManager->Bind(2);
-			terrain.draw();
-				
-			skybox.draw_skybox();
+			if(!isOrtho){
+				gluPerspective(angleCam, (GLfloat) width/(GLfloat) height, .1, 100.0);
+				//glScalef(.1,.1, .1);
 
+				glScalef(camScale.x,camScale.y, camScale.z);
+				glTranslatef(.06, .06, forwardz);
+				glRotatef(-5, 1, 0, 0);
+
+				gluLookAt (eye.x, eye.y, eye.z, center.x, center.y, center.z, 0.0, -1.0, 0.0);
+			}else{
+				glOrtho(minCoord.x, maxCoord.x, maxCoord.y, minCoord.y, minCoord.z, maxCoord.z);
+
+				gluLookAt (0.0, 0.0, distOrigem, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+			}
+
+			glMatrixMode(GL_MODELVIEW);
+			glLoadIdentity ();
+
+			skybox.draw_skybox(center, eye, skypos, skyscale, skyrot);
+			
+			if(!isOrtho) glRotatef(5, 1, 0, 0);						
+			drawSquade();					
+			if(!isOrtho) glRotatef(-5, 1, 0, 0);
+			
 			textureManager->Bind(0);
 			for(i = 0; i < nbatteries; i++){
 				batteries[i].draw();
@@ -701,29 +716,43 @@ void display(void)
 				}
 			}
 			
+			textureManager->Bind(2);
+			terrain.draw();
+			
+			for(auto itr = explosions.begin(); itr != explosions.end(); itr++){
+				float p = (*itr).getPercent() * 100.0;
+
+				for(i = 15; i >= 0; i--){
+					if(map[i] < p) break;
+				}
+
+				textureManager->Bind(i + 4);
+				(*itr).draw();
+			}
+			
 		    textureManager->Disable();			
 			
 			for(i = 0; i < nmissiles; i++){
 				firedMissiles[i].draw();
-				//glTranslatef(0.0f,-0.08f, 0.0f);
 				firedMissiles[i].drawTarget(SIDEX, SIDEY);
 			}
-			
+
 			for(i = 0; i < numEnemyMissiles; i++){
 				if(enemyLaunched[i] && !enemyMissiles[i].isDone()){
 					enemyMissiles[i].draw();
 				}
 			}
-
-			for(auto itr = explosions.begin(); itr != explosions.end(); itr++){
-				(*itr).draw();
-			}
+			
 			glRotatef(5, 1, 0, 0);
-			//glTranslatef(0.0f,-0.08f, 0.0f);
+			
 			glMatrixMode (GL_PROJECTION);
 			glLoadIdentity ();
 			glOrtho(minCoord.x, maxCoord.x, maxCoord.y, minCoord.y, minCoord.z, maxCoord.z);
 			gluLookAt (0.0, 0.0, 80.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+			
+			glMatrixMode(GL_MODELVIEW);
+			glLoadIdentity ();
+			
 			glDisable(GL_LIGHTING);
 
 			string levelTag = "Level " + to_string(level);
@@ -738,13 +767,18 @@ void display(void)
 			glEnable(GL_LIGHTING);
 			break;
 		}
-		case 2:
+		case 2:{
 			glMatrixMode (GL_PROJECTION);
 			glLoadIdentity ();
 
 			glOrtho(minCoord.x, maxCoord.x, maxCoord.y, minCoord.y, minCoord.z, maxCoord.z);
 			gluLookAt (0.0, 0.0, 80.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-
+			
+			glMatrixMode(GL_MODELVIEW);
+			glLoadIdentity ();
+			
+			drawSquade();
+			
 			n = (scores.size() > 10)?10:scores.size();
 			glDisable(GL_LIGHTING);
 
@@ -757,11 +791,13 @@ void display(void)
 			back.draw();
 			glEnable(GL_LIGHTING);
 			break;
+		}
 		default:
 			break;
 	}
 
 	glutSwapBuffers();
+	glutPostRedisplay();
 	if(endGame && !scoreSaved){
 		saveScore();
 		scoreSaved = true;
@@ -866,6 +902,7 @@ void keyboard (unsigned char key, int x, int y)
 {
 	switch(key){
 		case 27:
+			delete textureManager;
 			exit(0);
 			break;
 		case 32:
@@ -888,22 +925,22 @@ void keyboard (unsigned char key, int x, int y)
 			restart_game();
 			break;
 		case 'w':
-			eye.y += .01;
+			skyscale.y += .01;
 			break;
 		case 'a':
-			eye.x -= .01;
+			skyscale.x -= .01;
 			break;
 		case 's':
-			eye.y -= .01;
+			skyscale.y -= .01;
 			break;
 		case 'd':
-			eye.x += .01;
+			skyscale.x += .01;
 			break;
 		case 'q':
-			eye.z -= .1f;
+			skyscale.z -= .1f;
 			break;
 		case 'e':
-			eye.z += .1f;
+			skyscale.z += .1f;
 			break;
 		case '8':
 			center.y += .01;
@@ -924,20 +961,50 @@ void keyboard (unsigned char key, int x, int y)
 			center.z += .1;
 			break;
 		case '7':
-			angleCam += .01;
+			terrainz += .1;
 			break;
 		case '1':
-			angleCam -= .01;
+			terrainz -= .1;
 			/*if(angleCam < 1E-4 && angleCam > -1E-4){
 				angleCam = 0;
 			}*/
 			break;
+		case 't':
+			skypos.y += .01;
+			break;
+		case 'f':
+			skypos.x -= .01;
+			break;
+		case 'g':
+			skypos.y -= .01;
+			break;
+		case 'h':
+			skypos.x += .01;
+			break;
+		case 'y':
+			skypos.z -= .1f;
+			break;
+		case 'u':
+			skypos.z += .1f;
+			break;
+		case 'b':
+			forwardz -= .01;
+			break;
+		case 'n':
+			forwardz += .01;
+			break;
 		case '5':
 			cout << eye << " " << center << " " << angleCam << endl;
+			cout << "Pos: "<< skypos << endl;
+			cout <<"scale: " << skyscale << endl;
+			cout << "Rot: "<< skyrot << endl;
 			break;
 		default:
 			break;
 	}
+	cout << "Pos: "<< skypos << endl;
+	cout <<"scale: " << skyscale << endl;
+	cout << "Rot: "<< skyrot << endl;
 }
 
 void specialKey(int key, int x, int y){

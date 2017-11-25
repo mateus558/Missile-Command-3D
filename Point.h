@@ -14,6 +14,12 @@ struct Point{
 		z = 0.0;
 	}
 	
+	Point(float c){
+		x = c;
+		y = c;
+		z = c;
+	}
+	
 	Point(float x, float y, float z){
 		this->x = x;
 		this->y = y;
@@ -38,6 +44,12 @@ struct Point{
 		*this/=norm;
 	}
 	
+	void operator=(float c){
+		x = c;
+		y = c;
+		z = c;
+	}
+	
 	void operator=(const Point& p){
 		x = p.x;
 		y = p.y;
@@ -50,19 +62,93 @@ struct Point{
 		z *= c;
 	}
 	
+	void operator*=(const Point& p){
+		x *= p.x;
+		y *= p.y;
+		z *= p.z;
+	}
+	
+	void operator+=(float c){
+		x += c;
+		y += c;
+		z += c;
+	}
+	
+	void operator+=(const Point& p){
+		x += p.x;
+		y += p.y;
+		z += p.z;
+	}
+	
+	void operator-=(float c){
+		x -= c;
+		y -= c;
+		z -= c;
+	}
+	
+	void operator-=(const Point& p){
+		x -= p.x;
+		y -= p.y;
+		z -= p.z;
+	}
+	
 	void operator/=(float c){
 		x /= c;
 		y /= c;
 		z /= c;
 	}	
+	
+	void operator/=(const Point& p){
+		x /= p.x;
+		y /= p.y;
+		z /= p.z;
+	}
 		
 	friend std::ostream &operator<<( std::ostream &output, const Point &point ){
 		output << "[" << point.x << ", " << point.y << ", " << point.z << "]";
 
 		return output;
 	}
-
+	
+	Point operator+(const Point& q){
+		Point res;
+		
+		res.x = this->x + q.x;
+		res.y = this->y + q.y;
+		res.z = this->z + q.z;
+		
+		return res;
+	}
+	
+	Point operator-(const Point& q){
+		Point res;
+		
+		res.x = this->x - q.x;
+		res.y = this->y - q.y;
+		res.z = this->z - q.z;
+		
+		return res;
+	}
+	
+	Point operator/(const Point& q){
+		Point res;
+		
+		res.x = this->x / q.x;
+		res.y = this->y / q.y;
+		res.z = this->z / q.z;
+		
+		return res;
+	}
+	
+	Point operator*(const Point& q){
+		Point res;
+		
+		res.x = this->x * q.x;
+		res.y = this->y * q.y;
+		res.z = this->z * q.z;
+		
+		return res;
+	}
 };
-
 
 #endif

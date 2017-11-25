@@ -159,6 +159,35 @@ void PlyModel::readFromFile(const char* fileName){
 	}
 	
 	plyFile.close();
+	this->getCentroid();
+}
+
+Point PlyModel::getCentroid(){
+	int i, n = points.size();
+	Point sum;
+	
+	if(centroidComputed) return this->centroid;
+	
+	for(i = 0; i < n; i++){
+		sum += points[i];
+	}
+	
+	sum /= n;
+	this->centroid = sum;
+	centroidComputed = !centroidComputed;
+	
+	return this->centroid;
+}
+
+void PlyModel::translate(Point trans){
+	int i, n = points.size();
+	
+	for(i = 0; i < n; i++){
+		points[i] -= trans;
+	}
+	
+	centroidComputed = false;
+	this->getCentroid();
 }
 
 void PlyModel::normalize(){
@@ -199,11 +228,11 @@ void PlyModel::unitize(){
 	}	
 }
 
-void PlyModel::scale(float scaleFactor){
+void PlyModel::scale(Point scale){
 	int i, j, n = points.size();
 	
 	for(i = 0; i < n; i++){
-		points[i] *= scaleFactor;
+		points[i] *= scale;
 	}
 	normalized = false;
 }
@@ -260,10 +289,7 @@ void PlyModel::draw(DrawMode t){
 			break;
 		case FLAT_SURFACE:
 			for(i = 0; i < nf; i++){
-				if(facePoints == 3)	
-					glBegin(GL_TRIANGLE_FAN);
-				else 
-					glBegin(GL_QUADS);
+				glBegin(GL_TRIANGLE_FAN);
 				
 				for(j = 0; j < facePoints; j++){
 					if(!hasNormals && normalComputed){

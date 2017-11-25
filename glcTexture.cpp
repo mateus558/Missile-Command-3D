@@ -1,6 +1,7 @@
 #include <string>
 #include <stdio.h>
 #include <malloc.h>
+#include <iostream>
 
 #include "GL/glut.h"
 #include "png.h"

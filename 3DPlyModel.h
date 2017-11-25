@@ -32,11 +32,13 @@ public:
 	void readFromFile(const char* fileName);
 	void computeNormals();
 	void normalize();
-	void scale(float scaleFactor);
+	void scale(Point scale);
 	void draw(DrawMode t);
 	void unitize();
+	void translate(Point trans);
 	void setCoordinatesLimits(Point cmin, Point cmax);
 	int getTrianglesNumber();
+	Point getCentroid();
 	std::vector<Point> getPoints() {return points;}
 	std::vector<Point> getNormals() {return normals;}
 	std::vector<UV> getUVCoords() {return uv_coordinates;} 
@@ -44,9 +46,9 @@ public:
 	
 private:
 	bool hasNormals = false, normalComputed = false, normalized = false, minMaxAxisComputed = false, hasTexture = false;
-	bool centralized = false;
+	bool centralized = false, centroidComputed = false;
 	int facePoints = 0;
-	Point min, max;
+	Point min, max, centroid;
 	Point coorMin, coordMax;
 	
 	Material mat;

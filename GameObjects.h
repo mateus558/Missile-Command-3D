@@ -7,6 +7,8 @@
 
 #include "3DPlyModel.h"
 #include "Point.h"
+#include "utils.h"
+#include "glcTexture.h"
 
 //Classe base para os objetos de jogo
 class Object{
@@ -41,6 +43,9 @@ public:
 	void explode();
 	bool isExploding();
 	bool isDone();
+	
+	PlyModel getModel(){return model_3d;}
+	
 	//Atualiza variaveis do objeto
 	virtual void update(float dt){};
 	//Função para desenhar um objeto
@@ -100,9 +105,12 @@ class Explosion : public Object {
 		void update(float dt);
 		bool isColliding(Object obj);
 		void draw();
+		float getPercent(){return percent;}
 	private:
+		GLUquadric *quad;
 		bool finished = false;
 		int signal = 1; 
+		float percent = 0.0;
 		float finalRadius = 0.05, initRadius = 0.01;
 };
 
