@@ -70,8 +70,9 @@ void SkyBox::draw_skybox(Point center, Point eye, Point pos, Point scale, Point 
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_LIGHTING);
 		glDisable(GL_BLEND);
+		glDepthMask(GL_FALSE);
 		
-		glColor4f(1.5,1.5,1.5,1.5);
+		glColor4f(1,1,1,1);
 
 		glTranslatef(pos.x, pos.y, pos.z);
 		
@@ -88,7 +89,7 @@ void SkyBox::draw_skybox(Point center, Point eye, Point pos, Point scale, Point 
 			glBegin(GL_QUADS);
 				for(j = 0; j < facePoints; j++){
 					glTexCoord2f(uv_coordinates[faces[i][j]].u, uv_coordinates[faces[i][j]].v);
-					glNormal3f(normals[faces[i][j]].x, normals[faces[i][j]].y, normals[faces[i][j]].z);
+					//glNormal3f(normals[faces[i][j]].x, normals[faces[i][j]].y, normals[faces[i][j]].z);
 					glVertex3f(points[faces[i][j]].x, points[faces[i][j]].y, points[faces[i][j]].z);
 				}
 			glEnd();

@@ -289,13 +289,18 @@ void PlyModel::draw(DrawMode t){
 			break;
 		case FLAT_SURFACE:
 			for(i = 0; i < nf; i++){
-				glBegin(GL_TRIANGLE_FAN);
+				
+				if(facePoints == 3)
+					glBegin(GL_TRIANGLE_FAN);
+				else glBegin(GL_QUADS);
 				
 				for(j = 0; j < facePoints; j++){
-					if(!hasNormals && normalComputed){
-						glNormal3f(normals[i].x, normals[i].y, normals[i].z);
-					}else if(hasNormals){	
-						glNormal3f(normals[faces[i][j]].x, normals[faces[i][j]].y, normals[faces[i][j]].z);
+					if(!twoD){
+						if(!hasNormals && normalComputed){
+							glNormal3f(normals[i].x, normals[i].y, normals[i].z);
+						}else if(hasNormals){	
+							glNormal3f(normals[faces[i][j]].x, normals[faces[i][j]].y, normals[faces[i][j]].z);
+						}
 					}
 					if(hasTexture){
 						glTexCoord2f(uv_coordinates[faces[i][j]].u, uv_coordinates[faces[i][j]].v);

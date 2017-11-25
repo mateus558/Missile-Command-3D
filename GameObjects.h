@@ -4,6 +4,8 @@
 #include <vector>
 #include <cmath>
 #include <string>
+#include <AL/al.h>
+#include <AL/alc.h>
 
 #include "3DPlyModel.h"
 #include "Point.h"
@@ -60,7 +62,7 @@ class Terrain : public Object {
 
 class Missile : public Object {
 	public: 
-		Missile() : goal_pos(-1, -1, -1) {};
+		Missile() : goal_pos(-1, -1, -1) {this->load3DModel("Models/Missile.ply");};
 		void setGoal(Point pos);
 		void setFrom(Point from);
 		void fire();
@@ -68,12 +70,13 @@ class Missile : public Object {
 		std::vector<Missile> divide(int level);
 		void drawTarget(float sidex, float sidey);
 		void draw();
+		void isEnemy(bool flag);
 		void update(float dt);
 		
 		void operator=(const Missile&);
 	private:
 		float tx, ty;
-		bool fired = false;
+		bool fired = false, enemy = true;
 		Point goal_pos, from;
 };
 
@@ -107,7 +110,6 @@ class Explosion : public Object {
 		void draw();
 		float getPercent(){return percent;}
 	private:
-		GLUquadric *quad;
 		bool finished = false;
 		int signal = 1; 
 		float percent = 0.0;
@@ -124,6 +126,15 @@ class Button : public Object {
 	private:
 		std::string text;
 		Point size;
+};
+
+class Background : public Object {
+	public:
+		void loadTexture(const char* file);
+		void update(float dt){}
+		void draw();
+	private:
+		GLuint texture;
 };
 
 class Score : public Object {

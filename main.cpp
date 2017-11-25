@@ -39,9 +39,12 @@ float forwardz = 0.0, terrainz = -.5;
 Point skypos(0.869999, -0.64, -1.4);
 Point skyscale(.91, .76, -1.6);
 Point skyrot(0, 0, 0);
+
 glcTexture *textureManager;
 SkyBox skybox("Models/skybox.ply");
 Terrain terrain;
+Background menu_back;
+
 vector<Battery> batteries(3);
 vector<City> cities(6);
 vector<Missile> firedMissiles;
@@ -302,7 +305,7 @@ void init(void)
 	}
 	std::cout << "Using GLEW Version: " << glewGetString(GLEW_VERSION) << std::endl;
 	
-	glClearColor(0.0, 1.0, 0.0, 0.0);
+	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glShadeModel(GL_SMOOTH);
 
 	glEnable(GL_DEPTH_TEST);               // Habilita Z-buffer
@@ -319,12 +322,13 @@ void init(void)
 	SIDEY = convert_range(0, height, minCoord.y, maxCoord.y, SIDEY);
 
 	textureManager = new glcTexture();
-	textureManager->SetNumberOfTextures(20);
+	textureManager->SetNumberOfTextures(21);
 	textureManager->SetWrappingMode(GL_REPEAT);
 	textureManager->CreateTexture("Textures/PAC.png", 0);
 	textureManager->CreateTexture("Textures/city.png", 1);
 	textureManager->CreateTexture("Textures/terrain.png", 2);
 	textureManager->CreateTexture("Textures/exp2_1.png", 3);
+	textureManager->CreateTexture("Textures/missile.png", 20);
 	
 	exp_tex = list_datasets(false);
 	sort(exp_tex.begin(), exp_tex.end(), sort_explosion_tex);
@@ -337,25 +341,27 @@ void init(void)
 	
 	terrain.load3DModel("Models/terrain.ply");
 	terrain.updatePosition(Point(0.5, .7, 0));
-	terrain.setScale(0.5, 0.5, 0.5);
+	terrain.setScale(0.65, 0.65, 0.5);
 	terrain.setColor(.5, .5, 0);
 	
 	skybox.center_of(&terrain);
 	skybox.center_of(eye);
+	
+	menu_back.loadTexture("Textures/menu.png");
 
 	switch(menu){
 		case 0:
-			startGame.updatePosition(Point(maxCoord.x/2, maxCoord.y/2, 0));
+			startGame.updatePosition(Point(maxCoord.x/2, maxCoord.y/2, -0.1));
 			startGame.setSize(.07, .03);
 			startGame.setColor(0.0, 1.0, 0.0);
 			startGame.setText("Start Game");
 
-			scoreScreen.updatePosition(Point(maxCoord.x/2, maxCoord.y/2 + .1, 0));
+			scoreScreen.updatePosition(Point(maxCoord.x/2, maxCoord.y/2 + .1, -.1));
 			scoreScreen.setSize(0.07, 0.03);
 			scoreScreen.setColor(0.0, 1.0, 0.0);
 			scoreScreen.setText("Score");
 
-			back.updatePosition(Point(maxCoord.x-.1, maxCoord.y - .1, 0));
+			back.updatePosition(Point(maxCoord.x-.1, maxCoord.y - .1, -0.1));
 			back.setSize(.07, .03);
 			back.setColor(0.0, 1.0, 0.0);
 			back.setText("Beck");
@@ -624,10 +630,10 @@ void drawSquade()
 
 		glColor4f(0.0, 0.0, 1.0, 1.0);		
 		glBegin(GL_LINES);
-			glVertex3f(MOUSEx, (MOUSEy-SIDEY), .5);
-		    glVertex3f(MOUSEx, (MOUSEy+SIDEY), .5);
-		    glVertex3f((MOUSEx-SIDEX), MOUSEy, .5);
-		    glVertex3f((MOUSEx+SIDEX), MOUSEy, .5);
+			glVertex3f(MOUSEx, (MOUSEy-SIDEY), -.1);
+		    glVertex3f(MOUSEx, (MOUSEy+SIDEY), -.1);
+		    glVertex3f((MOUSEx-SIDEX), MOUSEy, -.1);
+		    glVertex3f((MOUSEx+SIDEX), MOUSEy, -.1);
 		glEnd();
 		glEnable(GL_LIGHTING);
   // 	glPopAttrib();
@@ -665,10 +671,12 @@ void display(void)
 			glMatrixMode (GL_PROJECTION);
 			glLoadIdentity ();
 			glOrtho(minCoord.x, maxCoord.x, maxCoord.y, minCoord.y, minCoord.z, maxCoord.z);
-			gluLookAt (0.0, 0.0, 80.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+			gluLookAt (0.0, 0.0, distOrigem, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 			
 			glMatrixMode(GL_MODELVIEW);
 			glLoadIdentity ();
+			
+			//menu_back.draw();
 			
 			drawSquade();
 			startGame.draw();
@@ -697,9 +705,9 @@ void display(void)
 
 			glMatrixMode(GL_MODELVIEW);
 			glLoadIdentity ();
-
-			skybox.draw_skybox(center, eye, skypos, skyscale, skyrot);
 			
+			skybox.draw_skybox(center, eye, skypos, skyscale, skyrot);
+
 			if(!isOrtho) glRotatef(5, 1, 0, 0);						
 			drawSquade();					
 			if(!isOrtho) glRotatef(-5, 1, 0, 0);
@@ -730,18 +738,20 @@ void display(void)
 				(*itr).draw();
 			}
 			
-		    textureManager->Disable();			
-			
 			for(i = 0; i < nmissiles; i++){
-				firedMissiles[i].draw();
 				firedMissiles[i].drawTarget(SIDEX, SIDEY);
+				textureManager->Bind(20);
+				firedMissiles[i].draw();
 			}
 
 			for(i = 0; i < numEnemyMissiles; i++){
 				if(enemyLaunched[i] && !enemyMissiles[i].isDone()){
+					textureManager->Bind(20);
 					enemyMissiles[i].draw();
 				}
 			}
+			
+		    textureManager->Disable();			
 			
 			glRotatef(5, 1, 0, 0);
 			

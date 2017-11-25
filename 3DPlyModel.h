@@ -38,6 +38,7 @@ public:
 	void translate(Point trans);
 	void setCoordinatesLimits(Point cmin, Point cmax);
 	int getTrianglesNumber();
+	void is2D(bool flag){twoD = flag;}
 	Point getCentroid();
 	std::vector<Point> getPoints() {return points;}
 	std::vector<Point> getNormals() {return normals;}
@@ -46,7 +47,7 @@ public:
 	
 private:
 	bool hasNormals = false, normalComputed = false, normalized = false, minMaxAxisComputed = false, hasTexture = false;
-	bool centralized = false, centroidComputed = false;
+	bool centralized = false, centroidComputed = false, twoD = false;
 	int facePoints = 0;
 	Point min, max, centroid;
 	Point coorMin, coordMax;

@@ -1,9 +1,13 @@
+#define _USE_MATH_DEFINES
+
 #include <iostream>
+#include <cmath>
 #include <GL/glut.h>
 
 #include "GameObjects.h"
 #include "Random.h"
 #include "utils.h"
+
 
 using namespace std;
 
@@ -150,6 +154,8 @@ void Missile::drawTarget(float sidex, float sidey){
 }
 
 void Missile::draw(){
+	float rotz = (enemy)?90:-90;
+	
 	if(done || exploded) return;
 
 	if(fired){
@@ -161,12 +167,28 @@ void Missile::draw(){
 			glVertex3f(pos.x, pos.y, 0.0f);
 		glEnd();
 		glEnable(GL_LIGHTING);
-
-		glColor4f(Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0), Random::floatInRange(0.0, 1.0), 0.0);
+		
+		float angle = acos(from.dot(goal_pos) / (from.norm() * goal_pos.norm())) * 180 / M_PI;
+		/*float m = (from.y-goal_pos.y)/(from.x-goal_pos.x);
+        m=atan(m)*180/3.14;
+        int inv = m/fabs(m);
+        int um=1;
+        if(goal_pos.y < from.y)
+            um*=-1;
+        inv*=um;
+		
+		if(goal_pos.y < from.y){
+			angle *= -1;
+		}*/
 
 		glPushMatrix();
 			glTranslatef(pos.x, pos.y, pos.z);
-			glutSolidSphere(0.004, 30, 30);
+			
+			glRotatef(angle, 0, 0, 1);
+			//glRotatef(m+(90*inv), 0, 1, 0);
+			if(enemy) glScalef(0.025, 0.025, 0.025); else glScalef(0.01, 0.01, 0.01);
+			
+			model_3d.draw(FLAT_SURFACE);
 		glPopMatrix();
 	}else if(!fired && (!exploded && !done)){
 		glDisable(GL_LIGHTING);
@@ -179,6 +201,10 @@ void Missile::draw(){
 		glEnd();
 		glEnable(GL_LIGHTING);
 	}
+}
+
+void Missile::isEnemy(bool flag){
+	enemy = flag;
 }
 
 void Missile::operator=(const Missile& p){
@@ -205,6 +231,7 @@ void Battery::init(){
 			missiles[k].setColor(color[0], color[1], color[2]);
 			missiles[k].updatePosition(Point(pos.x + j*1.009 - i*1.0045, pos.y - i*1.009 , 0));
 			missiles[k].setVelocities(Point(vel.x, vel.y, 0));
+			missiles[k].isEnemy(false);
 			k++;
 		}
 	}
@@ -223,6 +250,7 @@ void Battery::reload(){
 }
 
 Missile Battery::fire(Point from, Point goal){
+	from.x -= .025;
 	missiles[0].updatePosition(from);
 	missiles[0].setGoal(goal);
 	missiles[0].setFrom(from);
@@ -403,4 +431,53 @@ void Score::operator=(const Score& p){
 	this->pos = p.pos;
 	this->text = p.text;
 	this->score = p.score;
+}
+
+void Background::loadTexture(const char* file){
+	int width, height;
+	
+	texture = png_texture_load(file, &width, &height);
+	this->load3DModel("Models/Menu.ply");
+	model_3d.is2D(true);
+}
+
+void Background::draw(){
+	vector<vector<int> > faces = model_3d.getFaces();
+	vector<Point> points = model_3d.getPoints();
+	vector<Point> normals = model_3d.getNormals();
+	vector<UV> uv_coordinates = model_3d.getUVCoords();
+	int nf = faces.size(), facePoints = 3, i, j, k = 0;
+
+	glPushMatrix();
+	glLoadIdentity();
+	glPushAttrib(GL_ENABLE_BIT);
+		gluLookAt (0.0, 0.0, 80, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+		glEnable(GL_TEXTURE_2D);
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_LIGHTING);
+		glDisable(GL_BLEND);
+		glDepthMask(GL_FALSE);
+		
+		glColor4f(1,1,1,1);
+		glTranslatef(pos.x, pos.y, pos.z);
+		glScalef(1, 1, 1);
+		
+		glBindTexture(GL_TEXTURE_2D, texture);
+		for(i = 0; i < nf; i++){
+			glBegin(GL_TRIANGLE_FAN);
+				for(j = 0; j < facePoints; j++){
+					glTexCoord2f(uv_coordinates[faces[i][j]].u, uv_coordinates[faces[i][j]].v);
+					glVertex3f(points[faces[i][j]].x, points[faces[i][j]].y, points[faces[i][j]].z);
+				}
+			glEnd();
+		}
+		
+		glDisable(GL_TEXTURE_2D);		
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_LIGHTING);
+		glEnable(GL_BLEND);
+		glDepthMask(GL_TRUE);
+		
+	//glPopAttrib();
+	//glPopMatrix();
 }
