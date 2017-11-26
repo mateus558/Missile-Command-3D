@@ -1,10 +1,11 @@
+#define GL_GLEXT_PROTOTYPES
+
 #include <iostream>
 #include <algorithm>
 #include <vector>
 #include <fstream>
 #include <GL/glew.h>
 #include <GL/glut.h>
-#define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <cstring>
@@ -630,10 +631,10 @@ void drawSquade()
 
 		glColor4f(0.0, 0.0, 1.0, 1.0);		
 		glBegin(GL_LINES);
-			glVertex3f(MOUSEx, (MOUSEy-SIDEY), -.1);
-		    glVertex3f(MOUSEx, (MOUSEy+SIDEY), -.1);
-		    glVertex3f((MOUSEx-SIDEX), MOUSEy, -.1);
-		    glVertex3f((MOUSEx+SIDEX), MOUSEy, -.1);
+			glVertex3f(MOUSEx, (MOUSEy-SIDEY), -.01);
+		    glVertex3f(MOUSEx, (MOUSEy+SIDEY), -.01);
+		    glVertex3f((MOUSEx-SIDEX), MOUSEy, -.01);
+		    glVertex3f((MOUSEx+SIDEX), MOUSEy, -.01);
 		glEnd();
 		glEnable(GL_LIGHTING);
   // 	glPopAttrib();
@@ -689,8 +690,7 @@ void display(void)
 			glLoadIdentity ();
 			
 			if(!isOrtho){
-				gluPerspective(angleCam, (GLfloat) width/(GLfloat) height, .1, 100.0);
-				//glScalef(.1,.1, .1);
+				gluPerspective(angleCam, (GLfloat) width/(GLfloat) height, .1, 100.0); 
 
 				glScalef(camScale.x,camScale.y, camScale.z);
 				glTranslatef(.06, .06, forwardz);
@@ -699,7 +699,7 @@ void display(void)
 				gluLookAt (eye.x, eye.y, eye.z, center.x, center.y, center.z, 0.0, -1.0, 0.0);
 			}else{
 				glOrtho(minCoord.x, maxCoord.x, maxCoord.y, minCoord.y, minCoord.z, maxCoord.z);
-
+				
 				gluLookAt (0.0, 0.0, distOrigem, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 			}
 
@@ -725,6 +725,7 @@ void display(void)
 			}
 			
 			textureManager->Bind(2);
+
 			terrain.draw();
 			
 			for(auto itr = explosions.begin(); itr != explosions.end(); itr++){

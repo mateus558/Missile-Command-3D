@@ -168,24 +168,19 @@ void Missile::draw(){
 		glEnd();
 		glEnable(GL_LIGHTING);
 		
-		float angle = acos(from.dot(goal_pos) / (from.norm() * goal_pos.norm())) * 180 / M_PI;
-		/*float m = (from.y-goal_pos.y)/(from.x-goal_pos.x);
-        m=atan(m)*180/3.14;
+		float m = (from.y-goal_pos.y)/(from.x-goal_pos.x);
+       
+        m = atan(m) * 180 / M_PI;
+       
         int inv = m/fabs(m);
-        int um=1;
-        if(goal_pos.y < from.y)
-            um*=-1;
-        inv*=um;
-		
-		if(goal_pos.y < from.y){
-			angle *= -1;
-		}*/
-
+        
+        if(goal_pos.x < from.x){
+            inv *= -180;
+       	}
+       	
 		glPushMatrix();
 			glTranslatef(pos.x, pos.y, pos.z);
-			
-			glRotatef(angle, 0, 0, 1);
-			//glRotatef(m+(90*inv), 0, 1, 0);
+			glRotatef(m + inv, 0, 0, 1);
 			if(enemy) glScalef(0.025, 0.025, 0.025); else glScalef(0.01, 0.01, 0.01);
 			
 			model_3d.draw(FLAT_SURFACE);
@@ -393,10 +388,10 @@ void Button::draw(){
 	glColor3f(color[0], color[1], color[2]);
 
 	glBegin(GL_POLYGON);
-		glVertex3f(pos.x + size.x, pos.y - size.y, 0);
-		glVertex3f(pos.x - size.x, pos.y - size.y, 0);
-		glVertex3f(pos.x - size.x, pos.y + size.y, 0);
-		glVertex3f(pos.x + size.x, pos.y + size.y, 0);
+		glVertex3f(pos.x + size.x, pos.y - size.y, -.02);
+		glVertex3f(pos.x - size.x, pos.y - size.y, -.02);
+		glVertex3f(pos.x - size.x, pos.y + size.y, -.02);
+		glVertex3f(pos.x + size.x, pos.y + size.y, -.02);
 
 	glEnd();
 
@@ -478,6 +473,6 @@ void Background::draw(){
 		glEnable(GL_BLEND);
 		glDepthMask(GL_TRUE);
 		
-	//glPopAttrib();
-	//glPopMatrix();
+	glPopAttrib();
+	glPopMatrix();
 }

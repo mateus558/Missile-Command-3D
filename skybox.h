@@ -6,7 +6,6 @@
 #include "glcTexture.h"
 #include "3DPlyModel.h"
 #include "GameObjects.h"
-#include "shader.h"
 
 class SkyBox {
 	public:
@@ -21,7 +20,6 @@ class SkyBox {
 	private:
 		GLuint sides[6];
 		PlyModel model;
-		Shader *shader;
 		
 		int nTextures = 0;
 };

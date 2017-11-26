@@ -18,8 +18,6 @@ SkyBox::SkyBox(const char* skybox_model){
 void SkyBox::load_skybox(const char* front, const char* back, const char* top, const char* bottom, const char* left, const char* right){
 	int width, height;
 	
-	shader = new Shader("Shaders/skybox");
-	
 	sides[0] = png_texture_load(front, &width, &height);
 	sides[1] = png_texture_load(back, &width, &height);
 	sides[2] = png_texture_load(top, &width, &height);
@@ -30,8 +28,6 @@ void SkyBox::load_skybox(const char* front, const char* back, const char* top, c
 
 void SkyBox::load_skybox(const char* texture){
 	int width, height;
-
-	shader = new Shader("Shaders/skybox");
 	
 	sides[0] = png_texture_load(texture, &width, &height);
 	
@@ -80,9 +76,7 @@ void SkyBox::draw_skybox(Point center, Point eye, Point pos, Point scale, Point 
 		glRotatef(rot.x, 1, 0, 0);
 		glRotatef(rot.y, 0, 1, 0);
 		glRotatef(rot.z, 0, 0, 1);
-		
-		shader->Bind();
-		
+				
 		if(nTextures == 1) glBindTexture(GL_TEXTURE_2D, sides[0]);
 		for(i = 0; i < nf; i++){
 			if(nTextures > 1) glBindTexture(GL_TEXTURE_2D, sides[i]);
