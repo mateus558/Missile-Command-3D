@@ -5,7 +5,6 @@
 #include <GL/glut.h>
 
 #include "GameObjects.h"
-#include "Random.h"
 #include "utils.h"
 
 
@@ -20,6 +19,9 @@ Point minCoordi(0.0f, 0.0f, -100.0f), maxCoordi(1.0f, 1.0f, 100.0f);
 Object::Object(){}
 
 void Object::load3DModel(const char* file){
+	if(gouraud){
+		model_3d.activateGouraud(true);
+	}
 	model_3d.readFromFile(file);
 	model_3d.unitize();
 	model_3d.computeNormals();
@@ -321,7 +323,7 @@ void Explosion::draw(){
 		glColor4f(1.0, 1.0, 1.0, 1.0);
 		glTranslatef(pos.x, pos.y, pos.z);
 		
-		draw_circle(initRadius, 100);
+		Drawing::draw_circle(initRadius, 100, z);
 
 		glDisable(GL_BLEND);
 	glPopMatrix();
@@ -388,14 +390,14 @@ void Button::draw(){
 	glColor3f(color[0], color[1], color[2]);
 
 	glBegin(GL_POLYGON);
-		glVertex3f(pos.x + size.x, pos.y - size.y, -.02);
-		glVertex3f(pos.x - size.x, pos.y - size.y, -.02);
-		glVertex3f(pos.x - size.x, pos.y + size.y, -.02);
-		glVertex3f(pos.x + size.x, pos.y + size.y, -.02);
+		glVertex3f(pos.x + size.x, pos.y - size.y, -0.2);
+		glVertex3f(pos.x - size.x, pos.y - size.y, -0.2);
+		glVertex3f(pos.x - size.x, pos.y + size.y, -0.2);
+		glVertex3f(pos.x + size.x, pos.y + size.y, -0.2);
 
 	glEnd();
 
-   	Drawing::drawText(pos.x - size.x/2, pos.y + size.y/3, 10, 0, 0, 0, 1, text.c_str());
+   	Drawing::drawText(pos.x - size.x/2, pos.y + size.y/3, -.001, 0, 0, 0, 1, text.c_str());
 	glEnable(GL_LIGHTING);
 }
 
@@ -437,16 +439,20 @@ void Background::loadTexture(const char* file){
 }
 
 void Background::draw(){
+	if(!translated){
+		model_3d.translate(Point(0, 0, 0));
+		translated = !translated;
+	}
 	vector<vector<int> > faces = model_3d.getFaces();
 	vector<Point> points = model_3d.getPoints();
 	vector<Point> normals = model_3d.getNormals();
 	vector<UV> uv_coordinates = model_3d.getUVCoords();
 	int nf = faces.size(), facePoints = 3, i, j, k = 0;
-
+	
 	glPushMatrix();
 	glLoadIdentity();
 	glPushAttrib(GL_ENABLE_BIT);
-		gluLookAt (0.0, 0.0, 80, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+		glFrontFace(GL_CW);
 		glEnable(GL_TEXTURE_2D);
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_LIGHTING);
@@ -454,25 +460,20 @@ void Background::draw(){
 		glDepthMask(GL_FALSE);
 		
 		glColor4f(1,1,1,1);
-		glTranslatef(pos.x, pos.y, pos.z);
-		glScalef(1, 1, 1);
+		glTranslatef(pos.x+.5, pos.y+.5, pos.z);
+		glRotatef(180, 0, 0, 1);
+		glScalef(.5, .5, .5);
 		
 		glBindTexture(GL_TEXTURE_2D, texture);
 		for(i = 0; i < nf; i++){
-			glBegin(GL_TRIANGLE_FAN);
+			glBegin(GL_POLYGON);
 				for(j = 0; j < facePoints; j++){
 					glTexCoord2f(uv_coordinates[faces[i][j]].u, uv_coordinates[faces[i][j]].v);
 					glVertex3f(points[faces[i][j]].x, points[faces[i][j]].y, points[faces[i][j]].z);
 				}
 			glEnd();
 		}
-		
-		glDisable(GL_TEXTURE_2D);		
-		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_LIGHTING);
-		glEnable(GL_BLEND);
-		glDepthMask(GL_TRUE);
-		
+		glFrontFace(GL_CCW);
 	glPopAttrib();
 	glPopMatrix();
 }

@@ -12,6 +12,17 @@ float convertRange(float amin, float amax, float bmin, float bmax, float input){
 	return bmin + ((bmax - bmin) / (amax - amin)) * (input - amin);
 }
 
+bool exist(vector<int> v, int ele){
+	int i, n = v.size();
+	
+	for(i = 0; i < n; i++){
+		if(v[i] == ele){
+			return true;
+		}
+	}
+	return false;
+}
+
 void PlyModel::setMaterial(GLfloat *ambient, GLfloat *diffuse, GLfloat *specular, GLfloat *shininess){
 	mat.ambient = ambient;
 	mat.diffuse = diffuse;
@@ -61,12 +72,13 @@ void PlyModel::setCoordinatesLimits(Point cmin, Point cmax){
 }
 
 void PlyModel::readFromFile(const char* fileName){
-	bool dimSet = 0, endWhile = false;
-	int np, nf, i, j, dim;
+	bool dimSet = 0, endWhile = false, isNeigh = false;
+	int np, nf, dim, i, j, k, l;
 	char deli = 32;
 	ifstream plyFile(fileName);
 	string str, item, end("end_header");	
 	vector<string> items;
+	vector<int> neigh;
 	
 	plyFile >> str;
 	
@@ -156,6 +168,37 @@ void PlyModel::readFromFile(const char* fileName){
 			faces[i][j] = stoi(items[j+1]);
 		}
 		items.clear();
+	}
+	
+	if(useGouraud){
+		cout << "Computing gouraud..." << endl; 
+		for(i = 0; i < np; i++){
+			for(j = 0; j < nf; j++){
+				for(k = 0; k < dim; k++){
+					if(faces[j][k] == i){
+						for(l = 0; l < k; l++){
+							if(!exist(neigh, faces[j][l])){
+								neigh.push_back(faces[j][l]);
+							}
+						}
+						for(l = k+1; l < dim; l++){
+							if(!exist(neigh, faces[j][l])){
+								neigh.push_back(faces[j][l]);
+							}
+						}
+					}
+					if(neigh.size() >= 3) break;
+				}
+			}
+			
+			l = neigh.size();
+			for(j = 0; j < l; j++){
+				normals[i] += normals[neigh[j]];
+			}
+			normals[i] /= (l + 1);
+			
+			neigh.clear();
+		}
 	}
 	
 	plyFile.close();
@@ -290,23 +333,18 @@ void PlyModel::draw(DrawMode t){
 		case FLAT_SURFACE:
 			for(i = 0; i < nf; i++){
 				
-				if(facePoints == 3)
-					glBegin(GL_TRIANGLE_FAN);
-				else glBegin(GL_QUADS);
-				
-				for(j = 0; j < facePoints; j++){
-					if(!twoD){
+				glBegin(GL_POLYGON);
+					for(j = 0; j < facePoints; j++){
 						if(!hasNormals && normalComputed){
 							glNormal3f(normals[i].x, normals[i].y, normals[i].z);
 						}else if(hasNormals){	
 							glNormal3f(normals[faces[i][j]].x, normals[faces[i][j]].y, normals[faces[i][j]].z);
 						}
+						if(hasTexture){
+							glTexCoord2f(uv_coordinates[faces[i][j]].u, uv_coordinates[faces[i][j]].v);
+						}
+						glVertex3f(points[faces[i][j]].x, points[faces[i][j]].y, points[faces[i][j]].z);
 					}
-					if(hasTexture){
-						glTexCoord2f(uv_coordinates[faces[i][j]].u, uv_coordinates[faces[i][j]].v);
-					}
-					glVertex3f(points[faces[i][j]].x, points[faces[i][j]].y, points[faces[i][j]].z);
-				}
 				glEnd();
 			}
 			break;

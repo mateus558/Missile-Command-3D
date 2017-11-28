@@ -69,29 +69,26 @@ void SkyBox::draw_skybox(Point center, Point eye, Point pos, Point scale, Point 
 		glDepthMask(GL_FALSE);
 		
 		glColor4f(1,1,1,1);
-
+		
 		glTranslatef(pos.x, pos.y, pos.z);
 		
 		glScalef(scale.x, scale.y, scale.z);
 		glRotatef(rot.x, 1, 0, 0);
 		glRotatef(rot.y, 0, 1, 0);
 		glRotatef(rot.z, 0, 0, 1);
-				
+		glFrontFace(GL_CW);	
 		if(nTextures == 1) glBindTexture(GL_TEXTURE_2D, sides[0]);
 		for(i = 0; i < nf; i++){
 			if(nTextures > 1) glBindTexture(GL_TEXTURE_2D, sides[i]);
 			glBegin(GL_QUADS);
 				for(j = 0; j < facePoints; j++){
 					glTexCoord2f(uv_coordinates[faces[i][j]].u, uv_coordinates[faces[i][j]].v);
-					//glNormal3f(normals[faces[i][j]].x, normals[faces[i][j]].y, normals[faces[i][j]].z);
+		//			glNormal3f(normals[faces[i][j]].x, normals[faces[i][j]].y, normals[faces[i][j]].z);
 					glVertex3f(points[faces[i][j]].x, points[faces[i][j]].y, points[faces[i][j]].z);
 				}
 			glEnd();
 		}
 		
-		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_LIGHTING);
-		glEnable(GL_BLEND);
 	glPopAttrib();
 	glPopMatrix();
 	

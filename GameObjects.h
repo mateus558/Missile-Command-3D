@@ -9,6 +9,7 @@
 
 #include "3DPlyModel.h"
 #include "Point.h"
+#include "Random.h"
 #include "utils.h"
 #include "glcTexture.h"
 
@@ -19,7 +20,7 @@ protected:
 	Point vel, acel;
 	//Cor RGB do objeto
 	float color[3], scale[3];
-	bool exploded = false, done = false;
+	bool exploded = false, done = false, gouraud = false;
 	//Posição atual e anterior do objeto
 	Point pos, lastPos;
 	PlyModel model_3d;
@@ -28,6 +29,7 @@ public:
 	Object();
 	
 	void load3DModel(const char* file);
+	void useGouraud(bool flag){gouraud = flag; model_3d.activateGouraud(flag);}
 	void invertVx();
 	//Atualiza a posição do objeto
 	void updatePosition(Point pos);
@@ -104,6 +106,7 @@ class City : public Object {
 
 class Explosion : public Object {
 	public:
+		Explosion(){z = Random::floatInRange(0.1, 0.2);}
 		bool isFinished();
 		void update(float dt);
 		bool isColliding(Object obj);
@@ -113,6 +116,7 @@ class Explosion : public Object {
 		bool finished = false;
 		int signal = 1; 
 		float percent = 0.0;
+		GLfloat z = 0.0;
 		float finalRadius = 0.05, initRadius = 0.01;
 };
 
@@ -134,6 +138,7 @@ class Background : public Object {
 		void update(float dt){}
 		void draw();
 	private:
+		bool translated = false;
 		GLuint texture;
 };
 

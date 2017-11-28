@@ -44,7 +44,7 @@ Point skyrot(0, 0, 0);
 glcTexture *textureManager;
 SkyBox skybox("Models/skybox.ply");
 Terrain terrain;
-Background menu_back;
+Background menu_back, score_back;
 
 vector<Battery> batteries(3);
 vector<City> cities(6);
@@ -308,7 +308,9 @@ void init(void)
 	
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glShadeModel(GL_SMOOTH);
-
+	
+	glEnable(GL_BLEND);
+	glDepthMask(GL_TRUE);
 	glEnable(GL_DEPTH_TEST);               // Habilita Z-buffer
 	glEnable(GL_CULL_FACE); // Habilita Backface-Culling
 	glEnable(GL_LIGHTING);                 // Habilita luz
@@ -340,29 +342,32 @@ void init(void)
 
 	skybox.load_skybox("Textures/Skybox/skybox_texture.png");
 	
+	terrain.useGouraud(false);
+	cout << "Loading Terrain..." << endl;
 	terrain.load3DModel("Models/terrain.ply");
+	cout << "Terrain loaded..." << endl;
 	terrain.updatePosition(Point(0.5, .7, 0));
 	terrain.setScale(0.65, 0.65, 0.5);
 	terrain.setColor(.5, .5, 0);
 	
-	skybox.center_of(&terrain);
+	//skybox.center_of(&terrain);
 	skybox.center_of(eye);
-	
-	menu_back.loadTexture("Textures/menu.png");
 
+	menu_back.loadTexture("Textures/menu.png");
+	score_back.loadTexture("Textures/score.png");
 	switch(menu){
 		case 0:
-			startGame.updatePosition(Point(maxCoord.x/2, maxCoord.y/2, -0.1));
+			startGame.updatePosition(Point(maxCoord.x/2, maxCoord.y/2, -0.01));
 			startGame.setSize(.07, .03);
 			startGame.setColor(0.0, 1.0, 0.0);
 			startGame.setText("Start Game");
 
-			scoreScreen.updatePosition(Point(maxCoord.x/2, maxCoord.y/2 + .1, -.1));
+			scoreScreen.updatePosition(Point(maxCoord.x/2, maxCoord.y/2 + .1, -.01));
 			scoreScreen.setSize(0.07, 0.03);
 			scoreScreen.setColor(0.0, 1.0, 0.0);
 			scoreScreen.setText("Score");
 
-			back.updatePosition(Point(maxCoord.x-.1, maxCoord.y - .1, -0.1));
+			back.updatePosition(Point(maxCoord.x-.1, maxCoord.y - .1, -0.01));
 			back.setSize(.07, .03);
 			back.setColor(0.0, 1.0, 0.0);
 			back.setText("Beck");
@@ -623,22 +628,18 @@ void readScores(){
 
 //desenha o cursor
 void drawSquade()
-{
-//	glPushMatrix();
-//	glLoadIdentity();
-		glDisable(GL_LIGHTING);
-		glDisable(GL_TEXTURE_2D);
+{		
+	glDisable(GL_LIGHTING);
+	glDisable(GL_TEXTURE_2D);
 
-		glColor4f(0.0, 0.0, 1.0, 1.0);		
-		glBegin(GL_LINES);
-			glVertex3f(MOUSEx, (MOUSEy-SIDEY), -.01);
-		    glVertex3f(MOUSEx, (MOUSEy+SIDEY), -.01);
-		    glVertex3f((MOUSEx-SIDEX), MOUSEy, -.01);
-		    glVertex3f((MOUSEx+SIDEX), MOUSEy, -.01);
-		glEnd();
-		glEnable(GL_LIGHTING);
-  // 	glPopAttrib();
- //   glPopMatrix();
+	glColor4f(0.0, 0.0, 1.0, 1.0);		
+	glBegin(GL_LINES);
+		glVertex3f(MOUSEx, (MOUSEy-SIDEY), -0.1);
+	    glVertex3f(MOUSEx, (MOUSEy+SIDEY), -0.1);
+	    glVertex3f((MOUSEx-SIDEX), MOUSEy, -0.1);
+	    glVertex3f((MOUSEx+SIDEX), MOUSEy, -0.1);
+	glEnd();
+	glEnable(GL_LIGHTING);
 }
 
 void drawGrid(){
@@ -677,11 +678,15 @@ void display(void)
 			glMatrixMode(GL_MODELVIEW);
 			glLoadIdentity ();
 			
-			//menu_back.draw();
-			
-			drawSquade();
-			startGame.draw();
-			scoreScreen.draw();
+			glPushMatrix();
+			glLoadIdentity();
+			glPushAttrib(GL_ENABLE_BIT);
+				menu_back.draw();			
+				drawSquade();
+				startGame.draw();
+				scoreScreen.draw();
+			glPopAttrib();
+			glPopMatrix();
 
 			break;
 		}
@@ -706,55 +711,58 @@ void display(void)
 			glMatrixMode(GL_MODELVIEW);
 			glLoadIdentity ();
 			
-			skybox.draw_skybox(center, eye, skypos, skyscale, skyrot);
+			glPushMatrix();
+			glLoadIdentity();
+				skybox.draw_skybox(center, eye, skypos, skyscale, skyrot);
 
-			if(!isOrtho) glRotatef(5, 1, 0, 0);						
-			drawSquade();					
-			if(!isOrtho) glRotatef(-5, 1, 0, 0);
+				if(!isOrtho) glRotatef(5, 1, 0, 0);						
+				drawSquade();					
+				if(!isOrtho) glRotatef(-5, 1, 0, 0);
 			
-			textureManager->Bind(0);
-			for(i = 0; i < nbatteries; i++){
-				batteries[i].draw();
-			}
-
-			textureManager->Bind(1);
-			for(i = 0; i < ncities; i++){
-				if(!cities[i].isDone()){
-					cities[i].draw();
-				}
-			}
-			
-			textureManager->Bind(2);
-
-			terrain.draw();
-			
-			for(auto itr = explosions.begin(); itr != explosions.end(); itr++){
-				float p = (*itr).getPercent() * 100.0;
-
-				for(i = 15; i >= 0; i--){
-					if(map[i] < p) break;
+				textureManager->Bind(0);
+				for(i = 0; i < nbatteries; i++){
+					batteries[i].draw();
 				}
 
-				textureManager->Bind(i + 4);
-				(*itr).draw();
-			}
+				textureManager->Bind(1);
+				for(i = 0; i < ncities; i++){
+					if(!cities[i].isDone()){
+						cities[i].draw();
+					}
+				}
 			
-			for(i = 0; i < nmissiles; i++){
-				firedMissiles[i].drawTarget(SIDEX, SIDEY);
-				textureManager->Bind(20);
-				firedMissiles[i].draw();
-			}
+				textureManager->Bind(2);
 
-			for(i = 0; i < numEnemyMissiles; i++){
-				if(enemyLaunched[i] && !enemyMissiles[i].isDone()){
+				terrain.draw();
+			
+				for(auto itr = explosions.begin(); itr != explosions.end(); itr++){
+					float p = (*itr).getPercent() * 100.0;
+
+					for(i = 15; i >= 0; i--){
+						if(map[i] < p) break;
+					}
+
+					textureManager->Bind(i + 4);
+					(*itr).draw();
+				}
+			
+				for(i = 0; i < nmissiles; i++){
+					firedMissiles[i].drawTarget(SIDEX, SIDEY);
 					textureManager->Bind(20);
-					enemyMissiles[i].draw();
+					firedMissiles[i].draw();
 				}
-			}
+
+				for(i = 0; i < numEnemyMissiles; i++){
+					if(enemyLaunched[i] && !enemyMissiles[i].isDone()){
+						textureManager->Bind(20);
+						enemyMissiles[i].draw();
+					}
+				}
 			
-		    textureManager->Disable();			
+				textureManager->Disable();			
 			
-			glRotatef(5, 1, 0, 0);
+				glRotatef(5, 1, 0, 0);
+			glPopMatrix();
 			
 			glMatrixMode (GL_PROJECTION);
 			glLoadIdentity ();
@@ -763,19 +771,21 @@ void display(void)
 			
 			glMatrixMode(GL_MODELVIEW);
 			glLoadIdentity ();
-			
-			glDisable(GL_LIGHTING);
+			glPushMatrix();
+			glLoadIdentity();
+				glDisable(GL_LIGHTING);
 
-			string levelTag = "Level " + to_string(level);
-			Drawing::drawText(maxCoord.x/3, .03, 0, 1, 0, 0, 1, string(to_string(score)).c_str());
-			Drawing::drawText(2*maxCoord.x/3, .03, 0, 1, 0, 0, 1, string(to_string(score1)).c_str());
-			Drawing::drawText(.005, .03, 0, 0, 1, 0, 1, levelTag.c_str());
+				string levelTag = "Level " + to_string(level);
+				Drawing::drawText(maxCoord.x/3, .03, 0, 1, 0, 0, 1, string(to_string(score)).c_str());
+				Drawing::drawText(2*maxCoord.x/3, .03, 0, 1, 0, 0, 1, string(to_string(score1)).c_str());
+				Drawing::drawText(.005, .03, 0, 0, 1, 0, 1, levelTag.c_str());
 
-			if(endGame){
-				Drawing::drawText(maxCoord.x/2, maxCoord.y/2, 0, 1, 0, 0, 1, "THE END");
-				Drawing::drawText(maxCoord.x/2, maxCoord.y/2 + .1, 0, 0, 1, 0, 1, "Enter your name initials in the terminal.");
-			}
-			glEnable(GL_LIGHTING);
+				if(endGame){
+					Drawing::drawText(maxCoord.x/2, maxCoord.y/2, 0, 1, 0, 0, 1, "THE END");
+					Drawing::drawText(maxCoord.x/2, maxCoord.y/2 + .1, 0, 0, 1, 0, 1, "Enter your name initials in the terminal.");
+				}
+				glEnable(GL_LIGHTING);
+			glPopMatrix();
 			break;
 		}
 		case 2:{
@@ -788,31 +798,36 @@ void display(void)
 			glMatrixMode(GL_MODELVIEW);
 			glLoadIdentity ();
 			
-			drawSquade();
+			glPushMatrix();
+			glLoadIdentity();
+				score_back.draw();
+				drawSquade();
 			
-			n = (scores.size() > 10)?10:scores.size();
-			glDisable(GL_LIGHTING);
+				n = (scores.size() > 10)?10:scores.size();
+				glDisable(GL_LIGHTING);
 
-			Drawing::drawText(maxCoord.x/2 - .07, .25, 10, 0, 1, 0, 1, "SCORES");
+				Drawing::drawText(maxCoord.x/2 - .07, .25, 10, 0, 1, 0, 1, "SCORES");
 
-			for(auto itr = scores.begin(); itr != (scores.begin()+10); itr++){
-				(*itr).draw();
-			}
+				for(auto itr = scores.begin(); itr != (scores.begin()+10); itr++){
+					(*itr).draw();
+				}
 
-			back.draw();
-			glEnable(GL_LIGHTING);
+				back.draw();
+				glEnable(GL_LIGHTING);
+			glPopMatrix();
 			break;
 		}
 		default:
 			break;
 	}
 
-	glutSwapBuffers();
-	glutPostRedisplay();
 	if(endGame && !scoreSaved){
 		saveScore();
 		scoreSaved = true;
 	}
+
+	glutSwapBuffers();
+	glutPostRedisplay();
 }
 
 
@@ -1013,9 +1028,10 @@ void keyboard (unsigned char key, int x, int y)
 		default:
 			break;
 	}
-	cout << "Pos: "<< skypos << endl;
+	/*cout << "Pos: "<< skypos << endl;
 	cout <<"scale: " << skyscale << endl;
 	cout << "Rot: "<< skyrot << endl;
+*/
 }
 
 void specialKey(int key, int x, int y){

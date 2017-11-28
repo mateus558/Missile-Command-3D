@@ -30,6 +30,53 @@ namespace Drawing{
 			}
 		glEnd();
 	}
+	
+	GLvoid draw_circle(const GLfloat radius,const GLuint num_vertex, const GLfloat z)
+	{
+	  GLfloat vertex[4]; 
+	  GLfloat texcoord[2];
+	 
+	  const GLfloat delta_angle = 2.0*M_PI/num_vertex;
+	 
+	  glBegin(GL_TRIANGLE_FAN);
+	 
+	  //draw the vertex at the center of the circle
+	  texcoord[0] = 0.5;
+	  texcoord[1] = 0.5;
+	  glTexCoord2fv(texcoord);
+	 
+	  vertex[0] = vertex[1] = 0.0;
+	  vertex[2] = z;
+	  vertex[3] = 1.0;        
+	  glVertex4fv(vertex);
+	 
+	  for(int i = 0; i < num_vertex ; i++)
+	  {
+		texcoord[0] = (std::cos(delta_angle*i) + 1.0)*0.5;
+		texcoord[1] = (std::sin(delta_angle*i) + 1.0)*0.5;
+		glTexCoord2fv(texcoord);
+	 
+		vertex[0] = std::cos(delta_angle*i) * radius;
+		vertex[1] = std::sin(delta_angle*i) * radius;
+		vertex[2] = z;
+		vertex[3] = 1.0;
+		glVertex4fv(vertex);
+	  }
+	 
+	  texcoord[0] = (1.0 + 1.0)*0.5;
+	  texcoord[1] = (0.0 + 1.0)*0.5;
+	  glTexCoord2fv(texcoord);
+	 
+	  vertex[0] = 1.0 * radius;
+	  vertex[1] = 0.0 * radius;
+	  vertex[2] = z;
+	  vertex[3] = 1.0;
+	  glVertex4fv(vertex);
+	  glEnd();
+	 
+	  //glDisable(GL_TEXTURE_2D);
+	 
+	}
 }
 
 GLuint png_texture_load(const char * file_name, int * width, int * height)
@@ -249,50 +296,4 @@ vector<string> list_datasets(bool list){
     #endif
 
     return files;
-}
-
-GLvoid draw_circle(const GLfloat radius,const GLuint num_vertex)
-{
-  GLfloat vertex[4]; 
-  GLfloat texcoord[2];
- 
-  const GLfloat delta_angle = 2.0*M_PI/num_vertex;
- 
-  glBegin(GL_TRIANGLE_FAN);
- 
-  //draw the vertex at the center of the circle
-  texcoord[0] = 0.5;
-  texcoord[1] = 0.5;
-  glTexCoord2fv(texcoord);
- 
-  vertex[0] = vertex[1] = vertex[2] = 0.0;
-  vertex[3] = 1.0;        
-  glVertex4fv(vertex);
- 
-  for(int i = 0; i < num_vertex ; i++)
-  {
-    texcoord[0] = (std::cos(delta_angle*i) + 1.0)*0.5;
-    texcoord[1] = (std::sin(delta_angle*i) + 1.0)*0.5;
-    glTexCoord2fv(texcoord);
- 
-    vertex[0] = std::cos(delta_angle*i) * radius;
-    vertex[1] = std::sin(delta_angle*i) * radius;
-    vertex[2] = 0.0;
-    vertex[3] = 1.0;
-    glVertex4fv(vertex);
-  }
- 
-  texcoord[0] = (1.0 + 1.0)*0.5;
-  texcoord[1] = (0.0 + 1.0)*0.5;
-  glTexCoord2fv(texcoord);
- 
-  vertex[0] = 1.0 * radius;
-  vertex[1] = 0.0 * radius;
-  vertex[2] = 0.0;
-  vertex[3] = 1.0;
-  glVertex4fv(vertex);
-  glEnd();
- 
-  //glDisable(GL_TEXTURE_2D);
- 
 }
