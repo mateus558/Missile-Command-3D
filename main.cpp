@@ -1,4 +1,5 @@
 #define GL_GLEXT_PROTOTYPES
+#define PEI_SOUND 0
 
 #include <iostream>
 #include <algorithm>
@@ -15,6 +16,7 @@
 #include "utils.h"
 #include "3DPlyModel.h"
 #include "glcTexture.h"
+#include "glcSound.h"
 #include "skybox.h"
 
 using namespace std;
@@ -27,7 +29,7 @@ int distOrigem = 80;
 string playerName;
 Button startGame, scoreScreen, back;
 float Dt;
-bool endLevel, fullscreen = false, endGame = false, scoreSaved = false, paused = false, isOrtho = true;
+bool endLevel, fullscreen = false, endGame = false, scoreSaved = false, paused = false, isOrtho = false;
 float angleCam = 0.0f;
 Point minCoord(0.0f, 0.0f, -100.0f), maxCoord(1.0f, 1.0f, 100.0f);
 Point camScale(2, 2, 1);
@@ -41,7 +43,8 @@ Point skypos(0.869999, -0.64, -1.4);
 Point skyscale(.91, .76, -1.6);
 Point skyrot(0, 0, 0);
 
-glcTexture *textureManager;
+glcSound *sound = NULL;
+glcTexture *textureManager = NULL;
 SkyBox skybox("Models/skybox.ply");
 Terrain terrain;
 Background menu_back, score_back;
@@ -308,9 +311,7 @@ void init(void)
 	
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glShadeModel(GL_SMOOTH);
-	
-	glEnable(GL_BLEND);
-	glDepthMask(GL_TRUE);
+	glFrontFace(GL_CCW);
 	glEnable(GL_DEPTH_TEST);               // Habilita Z-buffer
 	glEnable(GL_CULL_FACE); // Habilita Backface-Culling
 	glEnable(GL_LIGHTING);                 // Habilita luz
@@ -318,29 +319,44 @@ void init(void)
 	glEnable(GL_NORMALIZE);
 	glEnable(GL_COLOR_MATERIAL);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+    glColorMaterial(GL_FRONT, GL_DIFFUSE);
 
 	glLightfv(GL_LIGHT0, GL_POSITION, posicao_luz);
 
 	SIDEX = convert_range(0, width, minCoord.x, maxCoord.x, SIDEX);
 	SIDEY = convert_range(0, height, minCoord.y, maxCoord.y, SIDEY);
 
-	textureManager = new glcTexture();
-	textureManager->SetNumberOfTextures(21);
-	textureManager->SetWrappingMode(GL_REPEAT);
-	textureManager->CreateTexture("Textures/PAC.png", 0);
-	textureManager->CreateTexture("Textures/city.png", 1);
+	sound = new glcSound();
+    sound->SetNumberOfSounds(2);
+    sound->AddSound(PEI_SOUND, "Sound/pei.wav");
+
+	textureManager = new glcTexture();							//Inicializa o gerenciador de texturas
+	textureManager->SetNumberOfTextures(21);					//Seta o número de texturas a serem gerenciadas
+	textureManager->SetWrappingMode(GL_REPEAT);					//Seta o modo de wrapping de texturas
+	
+	/********************************************
+	 * 		Início da criação de texturas		*
+	 ********************************************/
+	
+	textureManager->CreateTexture("Textures/PAC.png", 0);	
+	textureManager->CreateTexture("Textures/city.png", 1);	
 	textureManager->CreateTexture("Textures/terrain.png", 2);
 	textureManager->CreateTexture("Textures/exp2_1.png", 3);
 	textureManager->CreateTexture("Textures/missile.png", 20);
 	
+	//Pega as texturas das explosões
 	exp_tex = list_datasets(false);
-	sort(exp_tex.begin(), exp_tex.end(), sort_explosion_tex);
+	sort(exp_tex.begin(), exp_tex.end(), sort_explosion_tex);	//ordena os estados da explosão
 	for(i = 4; i < 20; i++, c += 6.25){
 		textureManager->CreateTexture(string(path + exp_tex[i-4]).c_str(), i);
-		map[i-4] = c;
+		map[i-4] = c;	//Mapeia cada textura a um estado da explosão
 	}
-
-	skybox.load_skybox("Textures/Skybox/skybox_texture.png");
+	
+	/********************************************
+	 * 		 	Fim da criação de texturas		*
+	 ********************************************
+	 * 	    Início da configuração do terreno	*
+	 ********************************************/
 	
 	terrain.useGouraud(false);
 	cout << "Loading Terrain..." << endl;
@@ -350,8 +366,21 @@ void init(void)
 	terrain.setScale(0.65, 0.65, 0.5);
 	terrain.setColor(.5, .5, 0);
 	
+	/********************************************
+	 * 		 Fim da configuração do terreno		*
+	 ********************************************
+	 * 	    Início da configuração da skybox	*
+	 ********************************************/
+	
+	skybox.load_skybox("Textures/Skybox/skybox_texture.png");	//Carrega skybox	
 	//skybox.center_of(&terrain);
 	skybox.center_of(eye);
+
+	/********************************************
+	 * 		 Fim da configuração do skybox		*
+	 ********************************************
+	 * 	    Início da configuração dos menus	*
+	 ********************************************/
 
 	menu_back.loadTexture("Textures/menu.png");
 	score_back.loadTexture("Textures/score.png");
@@ -632,7 +661,7 @@ void drawSquade()
 	glDisable(GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);
 
-	glColor4f(0.0, 0.0, 1.0, 1.0);		
+	glColor4f(0.2, 0.0, 0.0, 1.0);		
 	glBegin(GL_LINES);
 		glVertex3f(MOUSEx, (MOUSEy-SIDEY), -0.1);
 	    glVertex3f(MOUSEx, (MOUSEy+SIDEY), -0.1);
@@ -708,33 +737,39 @@ void display(void)
 				gluLookAt (0.0, 0.0, distOrigem, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 			}
 
+			
 			glMatrixMode(GL_MODELVIEW);
-			glLoadIdentity ();
+			glLoadIdentity ();			
 			
 			glPushMatrix();
-			glLoadIdentity();
+			glLoadIdentity();				
+				//Desenha skybox
 				skybox.draw_skybox(center, eye, skypos, skyscale, skyrot);
-
+				
+				//Desenha terreno com textura
+				textureManager->Bind(2);
+				terrain.draw();
+				
+				//Corrige e desenha a mira
 				if(!isOrtho) glRotatef(5, 1, 0, 0);						
 				drawSquade();					
 				if(!isOrtho) glRotatef(-5, 1, 0, 0);
-			
+				
+				//Desenhas as baterias com textura
 				textureManager->Bind(0);
 				for(i = 0; i < nbatteries; i++){
 					batteries[i].draw();
 				}
-
+				
+				//Desenha as cidades com textura
 				textureManager->Bind(1);
 				for(i = 0; i < ncities; i++){
 					if(!cities[i].isDone()){
 						cities[i].draw();
 					}
 				}
-			
-				textureManager->Bind(2);
-
-				terrain.draw();
-			
+				
+				//Desenha as explosões com as texturas correspondentes ao seu estado atual
 				for(auto itr = explosions.begin(); itr != explosions.end(); itr++){
 					float p = (*itr).getPercent() * 100.0;
 
@@ -745,13 +780,15 @@ void display(void)
 					textureManager->Bind(i + 4);
 					(*itr).draw();
 				}
-			
+				
+				//Desenha os mísseis e os targets
 				for(i = 0; i < nmissiles; i++){
 					firedMissiles[i].drawTarget(SIDEX, SIDEY);
 					textureManager->Bind(20);
 					firedMissiles[i].draw();
 				}
-
+				
+				
 				for(i = 0; i < numEnemyMissiles; i++){
 					if(enemyLaunched[i] && !enemyMissiles[i].isDone()){
 						textureManager->Bind(20);
@@ -906,7 +943,8 @@ void mouse(int button, int state, int x, int y){
 				p.y -= .004;
 				if(!batteries[id].isEmpty() && !batteries[id].isDone()){
 					Missile m = batteries[id].fire(p, Point(MOUSEx, MOUSEy, 0));
-
+					sound->PlaySound(PEI_SOUND);
+					
 					firedMissiles.push_back(m);
 				}
 
@@ -935,13 +973,13 @@ void keyboard (unsigned char key, int x, int y)
 			paused = !paused;
 			break;
 		case '+' :
-			distOrigem--;
+			eye.z -= 0.01;
 			break;
 		case 'p':
 			isOrtho = !isOrtho;
 			break;
 		case '-' :
-			distOrigem++;
+			eye.z += 0.01;
 			break;
 		case 'r':
 			restart_game();

@@ -171,23 +171,19 @@ void PlyModel::readFromFile(const char* fileName){
 	}
 	
 	if(useGouraud){
+		if(!hasNormals) computeNormals();
 		cout << "Computing gouraud..." << endl; 
 		for(i = 0; i < np; i++){
 			for(j = 0; j < nf; j++){
 				for(k = 0; k < dim; k++){
 					if(faces[j][k] == i){
 						for(l = 0; l < k; l++){
-							if(!exist(neigh, faces[j][l])){
-								neigh.push_back(faces[j][l]);
-							}
+							neigh.push_back(faces[j][l]);
 						}
 						for(l = k+1; l < dim; l++){
-							if(!exist(neigh, faces[j][l])){
-								neigh.push_back(faces[j][l]);
-							}
+							neigh.push_back(faces[j][l]);
 						}
 					}
-					if(neigh.size() >= 3) break;
 				}
 			}
 			

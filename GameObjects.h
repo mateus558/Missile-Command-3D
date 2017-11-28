@@ -64,7 +64,11 @@ class Terrain : public Object {
 
 class Missile : public Object {
 	public: 
-		Missile() : goal_pos(-1, -1, -1) {this->load3DModel("Models/Missile.ply");};
+		Missile() : goal_pos(-1, -1, -1) {
+			this->load3DModel("Models/Missile.ply");
+		
+		
+		}
 		void setGoal(Point pos);
 		void setFrom(Point from);
 		void fire();
@@ -77,8 +81,8 @@ class Missile : public Object {
 		
 		void operator=(const Missile&);
 	private:
-		float tx, ty;
-		bool fired = false, enemy = true;
+		float tx, ty, angle = 0.0;
+		bool fired = false, enemy = true, hasAngle = false;
 		Point goal_pos, from;
 };
 

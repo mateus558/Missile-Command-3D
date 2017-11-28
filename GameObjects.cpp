@@ -161,6 +161,7 @@ void Missile::draw(){
 	if(done || exploded) return;
 
 	if(fired){
+		glDisable(GL_BLEND);
 		glDisable(GL_LIGHTING);
 		glColor4f(color[0], color[1], color[2], 0.0);
 
@@ -170,21 +171,27 @@ void Missile::draw(){
 		glEnd();
 		glEnable(GL_LIGHTING);
 		
-		float m = (from.y-goal_pos.y)/(from.x-goal_pos.x);
-       
-        m = atan(m) * 180 / M_PI;
-       
-        int inv = m/fabs(m);
-        
-        if(goal_pos.x < from.x){
-            inv *= -180;
+		if(!hasAngle){
+			float m = (from.y-goal_pos.y)/(from.x-goal_pos.x);
+		   
+		    m = atan(m) * 180 / M_PI;
+		   
+		    int inv = m/fabs(m);
+		    
+		    if(goal_pos.x < from.x){
+		        inv *= -180;
+		   	}
+		   	
+		   	angle = m + inv;
+       		
+       		hasAngle = !hasAngle;
        	}
-       	
 		glPushMatrix();
 			glTranslatef(pos.x, pos.y, pos.z);
-			glRotatef(m + inv, 0, 0, 1);
+			glRotatef(angle, 0, 0, 1);
 			if(enemy) glScalef(0.025, 0.025, 0.025); else glScalef(0.01, 0.01, 0.01);
 			
+			glEnable(GL_LIGHTING);	
 			model_3d.draw(FLAT_SURFACE);
 		glPopMatrix();
 	}else if(!fired && (!exploded && !done)){
@@ -196,7 +203,7 @@ void Missile::draw(){
 			glVertex3f(pos.x+0.004, pos.y-0.004, 0.0);
 			glVertex3f(pos.x-0.004, pos.y-0.004, 0.0);
 		glEnd();
-		glEnable(GL_LIGHTING);
+		
 	}
 }
 
@@ -435,7 +442,6 @@ void Background::loadTexture(const char* file){
 	
 	texture = png_texture_load(file, &width, &height);
 	this->load3DModel("Models/Menu.ply");
-	model_3d.is2D(true);
 }
 
 void Background::draw(){
@@ -445,7 +451,6 @@ void Background::draw(){
 	}
 	vector<vector<int> > faces = model_3d.getFaces();
 	vector<Point> points = model_3d.getPoints();
-	vector<Point> normals = model_3d.getNormals();
 	vector<UV> uv_coordinates = model_3d.getUVCoords();
 	int nf = faces.size(), facePoints = 3, i, j, k = 0;
 	

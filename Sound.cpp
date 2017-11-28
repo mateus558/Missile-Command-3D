@@ -175,7 +175,7 @@ void Sound::play(const char* audioFile){
 		if(this->errorCheck("Failed to get source state.")) return false;
 	}
 	
-	this->clean();
+//	this->clean();
 }
 
 Sound::~Sound(){
